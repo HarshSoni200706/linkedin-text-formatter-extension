@@ -1,0 +1,10 @@
+/* Styles for the floating content toolbar injected into LinkedIn pages */
+.ltf-toolbar {
+  position: absolute;
+  z-index: 99999;
+  display: flex;
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}

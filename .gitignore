@@ -1,0 +1,28 @@
+# Dependencies and node modules (if any are introduced in future)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS metadata and system files
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Build and package outputs
+dist/
+build/
+*.zip
+*.crx
+
+# Environment variables and secrets
+.env
+.env.local
+.env.*.local
