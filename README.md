@@ -38,6 +38,35 @@ The **LinkedIn Text Formatter Extension** inserts an inline floating toolbar whe
 
 ---
 
+## Permissions & Scope
+
+To maintain security, privacy, and performance, this extension follows the principle of least privilege:
+- **No requested permissions:** Does not require broad permissions like `storage`, `activeTab`, or `<all_urls>`.
+- **Domain Restricted:** The content script is restricted strictly to matching URL patterns on LinkedIn (`https://www.linkedin.com/*`). It cannot run or access any other websites.
+
+---
+
+## Installation & Developer Mode Testing
+
+To load the extension manually into Google Chrome for testing:
+
+1. Open **Google Chrome** and navigate to `chrome://extensions/`.
+2. Enable **Developer mode** using the toggle in the top-right corner.
+3. Click the **Load unpacked** button in the top-left.
+4. Select the `linkedin-text-formatter-extension` folder.
+5. Confirm that the extension appears in the list without any manifest or syntax errors.
+
+### Verifying Extension Components
+
+- **Testing the Popup:** Click the extension icon in Chrome's toolbar (or pinned extensions menu). The popup should open displaying the Phase 3 status message.
+- **Testing the Content Script:**
+  1. Open [LinkedIn](https://www.linkedin.com/).
+  2. Open Chrome Developer Tools (`F12` or `Ctrl+Shift+I` / `Cmd+Option+I`).
+  3. Open the **Console** tab.
+  4. Look for the message: `[LinkedIn Text Formatter] Content script loaded successfully on LinkedIn.`
+
+---
+
 ## Important Unicode Accessibility Limitation
 
 > [!WARNING]
@@ -100,8 +129,8 @@ linkedin-text-formatter-extension/
 
 ## Current Development Status
 
-- **Active Phase:** Phase 2 Complete (Repository & Placeholder Structure Established)
-- **Next Phase:** Phase 3 — Chrome Extension Foundation (Manifest V3 setup & Content script injection verification)
+- **Active Phase:** Phase 3 — Chrome Extension Foundation (Foundation Code Complete, Pending Manual Browser Verification)
+- **Next Phase:** Phase 4 — Unicode Formatting Engine
 
 ---
 

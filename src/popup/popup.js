@@ -2,5 +2,9 @@
  * popup.js
  *
  * Logic for the extension popup window.
- * Displays usage details, status info, and handles user preference toggles if enabled.
+ * Displays foundation information. Active settings/toggles will be implemented in future phases.
  */
+
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('[LinkedIn Text Formatter] Popup initialized.');
+});
