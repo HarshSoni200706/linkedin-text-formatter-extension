@@ -238,11 +238,11 @@ Create a valid Manifest V3 extension that Chrome can load successfully.
 - [x] Configure the popup page.
 - [x] Use the minimum permissions required.
 - [x] Avoid broad permissions unless technically necessary.
-- [ ] Load the extension through Chrome's developer mode.
-- [ ] Confirm that Chrome shows no manifest errors.
-- [ ] Confirm that the content script runs on LinkedIn.
+- [x] Load the extension through Chrome's developer mode.
+- [x] Confirm that Chrome shows no manifest errors.
+- [x] Confirm that the content script runs on LinkedIn.
 - [x] Add temporary development logging.
-- [ ] Remove unnecessary logging before release.
+- [x] Remove unnecessary logging before release.
 
 ## Permission Review
 
