@@ -226,22 +226,22 @@ Create a valid Manifest V3 extension that Chrome can load successfully.
 
 ## Tasks
 
-- [ ] Create a valid `manifest.json`.
-- [ ] Set the manifest version to 3.
-- [ ] Add the extension name.
-- [ ] Add a short description.
-- [ ] Set an initial semantic version such as `0.1.0`.
-- [ ] Add extension icons.
-- [ ] Register the content script.
-- [ ] Restrict the content script to LinkedIn pages.
-- [ ] Register the injected toolbar stylesheet.
-- [ ] Configure the popup page.
-- [ ] Use the minimum permissions required.
-- [ ] Avoid broad permissions unless technically necessary.
+- [x] Create a valid `manifest.json`.
+- [x] Set the manifest version to 3.
+- [x] Add the extension name.
+- [x] Add a short description.
+- [x] Set an initial semantic version such as `0.1.0`.
+- [x] Add extension icons.
+- [x] Register the content script.
+- [x] Restrict the content script to LinkedIn pages.
+- [x] Register the injected toolbar stylesheet.
+- [x] Configure the popup page.
+- [x] Use the minimum permissions required.
+- [x] Avoid broad permissions unless technically necessary.
 - [ ] Load the extension through Chrome's developer mode.
 - [ ] Confirm that Chrome shows no manifest errors.
 - [ ] Confirm that the content script runs on LinkedIn.
-- [ ] Add temporary development logging.
+- [x] Add temporary development logging.
 - [ ] Remove unnecessary logging before release.
 
 ## Permission Review
@@ -1002,7 +1002,7 @@ Version 1 is complete only when all of the following are true:
 |---|---|
 | Phase 1 — Project Definition and Technical Planning | Completed |
 | Phase 2 — Repository and Folder Structure | Completed |
-| Phase 3 — Chrome Extension Foundation | Pending |
+| Phase 3 — Chrome Extension Foundation | In Progress |
 | Phase 4 — Unicode Formatting Engine | Pending |
 | Phase 5 — LinkedIn Editor Detection | Pending |
 | Phase 6 — Text Selection Management | Pending |
