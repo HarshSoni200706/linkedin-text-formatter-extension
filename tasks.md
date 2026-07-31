@@ -362,21 +362,21 @@ Reliably identify when the user is selecting text inside a supported LinkedIn po
 ## Tasks
 
 - [ ] Inspect the current LinkedIn post editor DOM.
-- [ ] Identify stable attributes, roles, or editor characteristics.
-- [ ] Avoid depending only on fragile generated CSS class names.
-- [ ] Detect `contenteditable` elements.
-- [ ] Confirm that the active editable element belongs to the LinkedIn post creation interface.
-- [ ] Exclude normal page text.
-- [ ] Exclude search fields.
-- [ ] Exclude navigation inputs.
-- [ ] Exclude message boxes for Version 1.
-- [ ] Exclude comment boxes for Version 1.
-- [ ] Support dynamically opened post modals.
-- [ ] Use event delegation where possible.
-- [ ] Use a MutationObserver only when necessary.
-- [ ] Prevent duplicate listeners when LinkedIn changes routes without a full page reload.
-- [ ] Detect LinkedIn's single-page application navigation.
-- [ ] Add a reusable function that determines whether an element is a supported editor.
+- [x] Identify stable attributes, roles, or editor characteristics.
+- [x] Avoid depending only on fragile generated CSS class names.
+- [x] Detect `contenteditable` elements.
+- [x] Confirm that the active editable element belongs to the LinkedIn post creation interface.
+- [x] Exclude normal page text.
+- [x] Exclude search fields.
+- [x] Exclude navigation inputs.
+- [x] Exclude message boxes for Version 1.
+- [x] Exclude comment boxes for Version 1.
+- [x] Support dynamically opened post modals.
+- [x] Use event delegation where possible.
+- [x] Use a MutationObserver only when necessary.
+- [x] Prevent duplicate listeners when LinkedIn changes routes without a full page reload.
+- [x] Detect LinkedIn's single-page application navigation.
+- [x] Add a reusable function that determines whether an element is a supported editor.
 
 ## Phase Completion Criteria
 
@@ -1004,7 +1004,7 @@ Version 1 is complete only when all of the following are true:
 | Phase 2 — Repository and Folder Structure | Completed |
 | Phase 3 — Chrome Extension Foundation | Completed |
 | Phase 4 — Unicode Formatting Engine | In Progress |
-| Phase 5 — LinkedIn Editor Detection | Pending |
+| Phase 5 — LinkedIn Editor Detection | In Progress |
 | Phase 6 — Text Selection Management | Pending |
 | Phase 7 — Floating Formatting Toolbar | Pending |
 | Phase 8 — Replace Selected Text Inside LinkedIn | Pending |
