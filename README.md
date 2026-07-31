@@ -169,10 +169,53 @@ linkedin-text-formatter-extension/
 
 ---
 
+## LinkedIn Editor Detection (Phase 5)
+
+The extension includes a highly robust, modular editor-detection API located in `src/content/editor-manager.js`.
+
+### Verification Status Matrix
+
+* **Directly Verified Behavior (Offline Mock DOM):**
+  * Resolution of child/text nodes to contenteditable roots.
+  * Rejection of `input` and `textarea` elements.
+  * Exclusion of search containers (via role `"search"`, `"searchbox"`, or class matches).
+  * Exclusions for comments and messaging overlays using structural selectors.
+  * Rejection of excluded dialog boxes (settings, filters, profiles).
+  * Verification of the post composer dialog modal ancestor.
+* **Structurally Inferred Behavior (Production Hypotheses):**
+  * It is inferred that LinkedIn post composers will reside within wrappers having `role="dialog"`, `aria-modal="true"`, or classes like `share-creation-state`/`share-box`.
+  * It is inferred that comment editors will be housed under ancestors containing class tags with `"comment"` (such as `comments-comment-box`).
+  * It is inferred that messaging editors will be nested inside forms/areas containing class tags with `"msg-"` or `"messaging"`.
+* **Manual LinkedIn testing still required:**
+  * Live verification of editor identification inside the actual LinkedIn web app.
+  * Verification that localized interfaces (non-English layouts) correctly resolve structures and exclude comments/messages (the English `aria-label`/`placeholder` checks have been demoted to secondary fallback status to aid localization, but manual confirmation is essential).
+  * Route changes and dynamic modal opening sequence on the live website.
+
+### Supported Editors
+* **Create a Post Editor:** The main rich text editor inside the post-creation modal popup (on LinkedIn Home page, Feed, Groups, etc.).
+
+### Intentionally Excluded Editors
+* **Search and Navigation inputs:** All input/textarea fields in search bars or filters.
+* **Comment Editors:** Rich comment-composer boxes under posts.
+* **Messaging Editors:** Chat/messaging composers (overlays and full message page).
+* **Profile / Article Editors:** Profile-edit fields and Pulse article/newsletter textareas.
+
+### Robust Detection Details
+* **Anti-fragility:** Instead of relying on volatile, minified, or generated LinkedIn CSS classes, the detector looks for stable semantic structures. It uses `contenteditable="true"` properties, accessible role types (`role="dialog"`, `role="search"`, `role="textbox"`), parent hierarchy traversal, and localized-label-safe checks.
+* **Dynamic Modals & SPA Navigation:** Handled efficiently using **document-level event delegation** (`focusin` and `click` listeners) which captures dynamically generated dialog editors without continuous DOM polling or expensive `MutationObserver` overhead. Rather than monkey-patching the History API in the isolated content-script world, route changes are tracked by re-evaluating the URL whenever user interaction occurs or on `popstate` events, resetting the active editor cached reference.
+
+### Running Editor Detection Tests
+To verify the detector's logic offline in a simulated environment, execute the zero-dependency Node.js test runner:
+```bash
+node tests/editor-detector.test.js
+```
+
+---
+
 ## Current Development Status
 
-- **Active Phase:** Phase 4 — Unicode Formatting Engine Complete (Pending Manual Visual/Browser Verification)
-- **Next Phase:** Phase 5 — LinkedIn Editor Detection
+* **Active Phase:** Phase 5 — LinkedIn Editor Detection (Implementation completed, pending manual LinkedIn browser verification).
+* **Next Phase:** Phase 6 — Text Selection Management.
 
 ---
 
