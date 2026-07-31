@@ -275,72 +275,72 @@ Build and validate the text conversion system independently from LinkedIn.
 
 ### Bold
 
-- [ ] Create uppercase bold character mappings.
-- [ ] Create lowercase bold character mappings.
-- [ ] Add supported bold number mappings.
-- [ ] Preserve spaces.
-- [ ] Preserve punctuation.
-- [ ] Preserve unsupported characters without corrupting them.
+- [x] Create uppercase bold character mappings.
+- [x] Create lowercase bold character mappings.
+- [x] Add supported bold number mappings.
+- [x] Preserve spaces.
+- [x] Preserve punctuation.
+- [x] Preserve unsupported characters without corrupting them.
 
 ### Italic
 
-- [ ] Create uppercase italic character mappings.
-- [ ] Create lowercase italic character mappings.
-- [ ] Handle Unicode exceptions where a direct sequential mapping is unavailable.
-- [ ] Preserve numbers if the chosen italic style does not support them.
-- [ ] Preserve spaces and punctuation.
+- [x] Create uppercase italic character mappings.
+- [x] Create lowercase italic character mappings.
+- [x] Handle Unicode exceptions where a direct sequential mapping is unavailable.
+- [x] Preserve numbers if the chosen italic style does not support them.
+- [x] Preserve spaces and punctuation.
 
 ### Bold Italic
 
-- [ ] Create uppercase bold-italic mappings.
-- [ ] Create lowercase bold-italic mappings.
-- [ ] Preserve unsupported characters safely.
-- [ ] Verify visual consistency.
+- [x] Create uppercase bold-italic mappings.
+- [x] Create lowercase bold-italic mappings.
+- [x] Preserve unsupported characters safely.
+- [x] Verify visual consistency.
 
 ### Underline
 
-- [ ] Apply the Unicode combining low line character to supported characters.
-- [ ] Avoid underlining newline characters.
-- [ ] Decide whether spaces should receive underline marks.
-- [ ] Prevent duplicate underline marks when formatting already underlined text.
-- [ ] Test punctuation behavior.
+- [x] Apply the Unicode combining low line character to supported characters.
+- [x] Avoid underlining newline characters.
+- [x] Decide whether spaces should receive underline marks.
+- [x] Prevent duplicate underline marks when formatting already underlined text.
+- [x] Test punctuation behavior.
 
 ### Double Underline
 
-- [ ] Apply the Unicode combining double low line character.
-- [ ] Avoid applying it to newline characters.
-- [ ] Decide whether spaces should receive double underline marks.
-- [ ] Prevent duplicate double underline marks.
-- [ ] Test punctuation behavior.
+- [x] Apply the Unicode combining double low line character.
+- [x] Avoid applying it to newline characters.
+- [x] Decide whether spaces should receive double underline marks.
+- [x] Prevent duplicate double underline marks.
+- [x] Test punctuation behavior.
 
 ### Formatter API
 
-- [ ] Create one central formatting function.
-- [ ] Make it accept normal text and a style identifier.
-- [ ] Return converted text without changing the original input.
-- [ ] Handle empty strings.
-- [ ] Handle multiline text.
-- [ ] Handle mixed uppercase and lowercase text.
-- [ ] Handle numbers.
-- [ ] Handle punctuation.
-- [ ] Handle emojis.
-- [ ] Handle already formatted text safely.
-- [ ] Return unchanged text for unsupported styles instead of crashing.
+- [x] Create one central formatting function.
+- [x] Make it accept normal text and a style identifier.
+- [x] Return converted text without changing the original input.
+- [x] Handle empty strings.
+- [x] Handle multiline text.
+- [x] Handle mixed uppercase and lowercase text.
+- [x] Handle numbers.
+- [x] Handle punctuation.
+- [x] Handle emojis.
+- [x] Handle already formatted text safely.
+- [x] Return unchanged text for unsupported styles instead of crashing.
 
 ## Required Test Cases
 
-- [ ] Single lowercase word.
-- [ ] Single uppercase word.
-- [ ] Mixed-case sentence.
-- [ ] Sentence with numbers.
-- [ ] Sentence with punctuation.
-- [ ] Sentence containing emojis.
-- [ ] Multiline text.
-- [ ] Empty selection.
-- [ ] Already formatted text.
-- [ ] Text containing links.
-- [ ] Text containing hashtags.
-- [ ] Text containing mentions.
+- [x] Single lowercase word.
+- [x] Single uppercase word.
+- [x] Mixed-case sentence.
+- [x] Sentence with numbers.
+- [x] Sentence with punctuation.
+- [x] Sentence containing emojis.
+- [x] Multiline text.
+- [x] Empty selection.
+- [x] Already formatted text.
+- [x] Text containing links.
+- [x] Text containing hashtags.
+- [x] Text containing mentions.
 
 ## Phase Completion Criteria
 
@@ -1002,8 +1002,8 @@ Version 1 is complete only when all of the following are true:
 |---|---|
 | Phase 1 — Project Definition and Technical Planning | Completed |
 | Phase 2 — Repository and Folder Structure | Completed |
-| Phase 3 — Chrome Extension Foundation | In Progress |
-| Phase 4 — Unicode Formatting Engine | Pending |
+| Phase 3 — Chrome Extension Foundation | Completed |
+| Phase 4 — Unicode Formatting Engine | In Progress |
 | Phase 5 — LinkedIn Editor Detection | Pending |
 | Phase 6 — Text Selection Management | Pending |
 | Phase 7 — Floating Formatting Toolbar | Pending |

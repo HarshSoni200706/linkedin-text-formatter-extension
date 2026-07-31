@@ -67,6 +67,47 @@ To load the extension manually into Google Chrome for testing:
 
 ---
 
+## Unicode Formatting Engine
+
+This project contains a standalone, zero-dependency Unicode formatting engine. It transforms plain text into stylized representations without using HTML or CSS.
+
+### Native Rich Text vs. Unicode Styling
+- **Native Rich Text:** Uses markup tags (`<b>`, `<i>`, `<u>`) or styling properties to change the presentation layer. It preserves the underlying standard ASCII characters.
+- **Unicode Styling:** Modifies the actual text data by converting characters to specific mathematical alphanumeric code points. This allows the styled text to persist when copied and pasted onto platforms that only support plain text, such as LinkedIn.
+
+### Supported Characters & Formatting Logic
+- **Bold (`bold`):** Translates standard English uppercase `A–Z` and lowercase `a–z` to Mathematical Bold Serif equivalents, and digits `0–9` to Mathematical Bold digits.
+- **Italic (`italic`):** Translates standard English uppercase `A–Z` and lowercase `a–z` to Mathematical Italic Serif equivalents. Digits are left unstyled as the Unicode italic serif alphabet does not define italic digits.
+  - *Exception:* Lowercase italic `h` is mapped to the Planck Constant (`ℎ`, `U+210E`) because `U+1D455` is undefined in the standard mathematical Unicode block.
+- **Bold Italic (`bold-italic`):** Translates uppercase `A–Z` and lowercase `a–z` to Mathematical Bold Italic Serif equivalents. Digits are left unstyled.
+- **Underline (`underline`):** Appends U+0332 (`COMBINING LOW LINE`) to each eligible character.
+- **Double Underline (`double-underline`):** Appends U+0333 (`COMBINING DOUBLE LOW LINE`) to each eligible character.
+
+### Non-ASCII and Unsupported Characters
+Punctuation, emojis, hashtags, URLs, and non-Latin alphabets (such as Chinese, Hindi, etc.) are **not** modified. Emojis and newlines are skipped when applying underline combining marks to avoid visual layout corruption.
+
+### Idempotency & Normalization
+To prevent stacked transformations or corrupted text, the formatting engine automatically passes all input through a normalizer (`src/formatter/text-normalizer.js`) before applying a new style. The normalizer maps styled Unicode characters back to their plain ASCII counterparts and strips existing U+0332/U+0333 combining marks.
+
+---
+
+## Running Formatter Tests
+
+The formatter test suite runs 26 test cases verifying various text conversions, edge cases, and normalization behaviors.
+
+### Running Tests via Browser (Zero Dependencies)
+Since Node.js is not required, tests can be run directly inside any modern web browser:
+1. Open the file `tests/runner.html` in your browser.
+2. The page will dynamically execute `tests/formatter.test.js` and render the pass/fail results in a clear green/red interface.
+
+### Running Tests via Node.js
+If Node.js is available on your system, you can run the test suite in the terminal:
+```bash
+node tests/formatter.test.js
+```
+
+---
+
 ## Important Unicode Accessibility Limitation
 
 > [!WARNING]
@@ -122,6 +163,7 @@ linkedin-text-formatter-extension/
 │
 └── tests/
     ├── formatter.test.js
+    ├── runner.html
     └── test-cases.md
 ```
 
@@ -129,11 +171,12 @@ linkedin-text-formatter-extension/
 
 ## Current Development Status
 
-- **Active Phase:** Phase 3 — Chrome Extension Foundation (Foundation Code Complete, Pending Manual Browser Verification)
-- **Next Phase:** Phase 4 — Unicode Formatting Engine
+- **Active Phase:** Phase 4 — Unicode Formatting Engine Complete (Pending Manual Visual/Browser Verification)
+- **Next Phase:** Phase 5 — LinkedIn Editor Detection
 
 ---
 
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
+
