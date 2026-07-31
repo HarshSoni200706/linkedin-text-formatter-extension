@@ -361,7 +361,7 @@ Reliably identify when the user is selecting text inside a supported LinkedIn po
 
 ## Tasks
 
-- [ ] Inspect the current LinkedIn post editor DOM.
+- [x] Inspect the current LinkedIn post editor DOM.
 - [x] Identify stable attributes, roles, or editor characteristics.
 - [x] Avoid depending only on fragile generated CSS class names.
 - [x] Detect `contenteditable` elements.
