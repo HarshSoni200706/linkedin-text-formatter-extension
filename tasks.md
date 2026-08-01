@@ -397,33 +397,33 @@ Capture and preserve the user's selected text so it can be replaced after a tool
 
 ## Tasks
 
-- [ ] Listen for text selection changes.
-- [ ] Detect mouse-based selection.
-- [ ] Detect keyboard-based selection.
-- [ ] Verify that the selection is inside a supported editor.
-- [ ] Ignore collapsed selections where no text is selected.
-- [ ] Store a safe copy of the active selection range.
-- [ ] Preserve the selection when the toolbar receives focus.
-- [ ] Restore the saved selection before replacing text.
-- [ ] Clear stale selections.
-- [ ] Handle selection across multiple text nodes.
-- [ ] Handle selections containing line breaks.
-- [ ] Handle selection from right to left.
-- [ ] Handle rapid selection changes.
-- [ ] Avoid interfering with LinkedIn's native selection behavior.
-- [ ] Hide the toolbar when the selection becomes invalid.
+- [x] Listen for text selection changes.
+- [x] Detect mouse-based selection.
+- [x] Detect keyboard-based selection.
+- [x] Verify that the selection is inside a supported editor.
+- [x] Ignore collapsed selections where no text is selected.
+- [x] Store a safe copy of the active selection range.
+- [x] Preserve the selection when the toolbar receives focus.
+- [x] Restore the saved selection before replacing text.
+- [x] Clear stale selections.
+- [x] Handle selection across multiple text nodes.
+- [x] Handle selections containing line breaks.
+- [x] Handle selection from right to left.
+- [x] Handle rapid selection changes.
+- [x] Avoid interfering with LinkedIn's native selection behavior.
+- [x] Hide the toolbar when the selection becomes invalid.
 
 ## Edge Cases
 
-- [ ] Selection begins outside the editor and ends inside it.
-- [ ] Selection begins inside and ends outside.
-- [ ] User selects only whitespace.
-- [ ] User presses Escape.
-- [ ] User clicks outside the editor.
-- [ ] User closes the post modal.
-- [ ] LinkedIn rerenders the editor.
-- [ ] User selects an emoji.
-- [ ] User selects a hashtag or mention.
+- [x] Selection begins outside the editor and ends inside it.
+- [x] Selection begins inside and ends outside.
+- [x] User selects only whitespace.
+- [x] User presses Escape.
+- [x] User clicks outside the editor.
+- [x] User closes the post modal.
+- [x] LinkedIn rerenders the editor.
+- [x] User selects an emoji.
+- [x] User selects a hashtag or mention.
 
 ## Phase Completion Criteria
 
@@ -1005,7 +1005,7 @@ Version 1 is complete only when all of the following are true:
 | Phase 3 — Chrome Extension Foundation | Completed |
 | Phase 4 — Unicode Formatting Engine | In Progress |
 | Phase 5 — LinkedIn Editor Detection | In Progress |
-| Phase 6 — Text Selection Management | Pending |
+| Phase 6 — Text Selection Management | In Progress |
 | Phase 7 — Floating Formatting Toolbar | Pending |
 | Phase 8 — Replace Selected Text Inside LinkedIn | Pending |
 | Phase 9 — Extension Popup | Pending |

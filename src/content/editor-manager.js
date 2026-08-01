@@ -219,6 +219,7 @@
       return { supported: false, reason: 'Inputs and textareas are not supported post editors' };
     }
 
+    // 1. Strict Exclusions (must always be checked and rejected first)
     if (isInsideSearchOrNav(root)) {
       return { supported: false, reason: 'Element is inside search or navigation' };
     }
@@ -235,16 +236,42 @@
       return { supported: false, reason: 'Element is inside an article or newsletter editor' };
     }
 
+    // 2. Positive Signal Confidence Check (Scored Approach)
+    let score = 0;
+    const matchedSignals = [];
+
+    // Signal A: Route-based composer URL (/sharing/compose) combined with role="textbox"
+    const isComposeRoute = window.location.pathname.startsWith('/sharing/compose');
+    if (isComposeRoute) {
+      matchedSignals.push('sharing-compose-route');
+      if (root.getAttribute && root.getAttribute('role') === 'textbox') {
+        matchedSignals.push('role-textbox');
+        score += 2; // Strong signal combination
+      }
+    }
+
+    // Signal B: Traditional modal dialog container (role="dialog" or class matches)
     const dialogAncestor = findDialogAncestor(root);
-    if (!dialogAncestor) {
-      return { supported: false, reason: 'Element is not inside a post editor dialog modal' };
+    if (dialogAncestor) {
+      if (isExcludedDialog(dialogAncestor)) {
+        return { supported: false, reason: 'Element is inside an excluded dialog modal (settings, filter, profile)' };
+      }
+      matchedSignals.push('dialog-ancestor');
+      score += 2; // Strong signal
     }
 
-    if (isExcludedDialog(dialogAncestor)) {
-      return { supported: false, reason: 'Element is inside an excluded dialog modal (settings, filter, profile)' };
+    if (score < 2) {
+      return { 
+        supported: false, 
+        reason: 'Element does not have sufficient post-editor signals (e.g. not inside modal dialog and not on sharing/compose route with role textbox)' 
+      };
     }
 
-    return { supported: true, reason: 'Supported LinkedIn post editor' };
+    return { 
+      supported: true, 
+      reason: 'Supported LinkedIn post editor',
+      signals: matchedSignals
+    };
   }
 
   // Determine whether an element is a supported LinkedIn post editor (boolean return)

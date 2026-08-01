@@ -181,18 +181,18 @@ The extension includes a highly robust, modular editor-detection API located in 
   * Exclusion of search containers (via role `"search"`, `"searchbox"`, or class matches).
   * Exclusions for comments and messaging overlays using structural selectors.
   * Rejection of excluded dialog boxes (settings, filters, profiles).
-  * Verification of the post composer dialog modal ancestor.
+  * Verification of the post composer dialog modal ancestor OR route-based `/sharing/compose` composer.
 * **Structurally Inferred Behavior (Production Hypotheses):**
-  * It is inferred that LinkedIn post composers will reside within wrappers having `role="dialog"`, `aria-modal="true"`, or classes like `share-creation-state`/`share-box`.
+  * It is inferred that LinkedIn post composers will reside within wrappers having `role="dialog"`, `aria-modal="true"`, or classes like `share-creation-state`/`share-box`, OR on the `/sharing/compose` composer page route combined with a `role="textbox"` contenteditable.
   * It is inferred that comment editors will be housed under ancestors containing class tags with `"comment"` (such as `comments-comment-box`).
   * It is inferred that messaging editors will be nested inside forms/areas containing class tags with `"msg-"` or `"messaging"`.
 * **Manual LinkedIn testing still required:**
-  * Live verification of editor identification inside the actual LinkedIn web app.
+  * Live verification of editor identification inside the actual LinkedIn web app (both modal popup and sharing composer page).
   * Verification that localized interfaces (non-English layouts) correctly resolve structures and exclude comments/messages (the English `aria-label`/`placeholder` checks have been demoted to secondary fallback status to aid localization, but manual confirmation is essential).
   * Route changes and dynamic modal opening sequence on the live website.
 
 ### Supported Editors
-* **Create a Post Editor:** The main rich text editor inside the post-creation modal popup (on LinkedIn Home page, Feed, Groups, etc.).
+* **Create a Post Editor:** The main rich text editor inside the post-creation modal popup (on LinkedIn Home page, Feed, Groups, etc.) as well as the full-page route-based sharing composer (`/sharing/compose`).
 
 ### Intentionally Excluded Editors
 * **Search and Navigation inputs:** All input/textarea fields in search bars or filters.
@@ -201,7 +201,7 @@ The extension includes a highly robust, modular editor-detection API located in 
 * **Profile / Article Editors:** Profile-edit fields and Pulse article/newsletter textareas.
 
 ### Robust Detection Details
-* **Anti-fragility:** Instead of relying on volatile, minified, or generated LinkedIn CSS classes, the detector looks for stable semantic structures. It uses `contenteditable="true"` properties, accessible role types (`role="dialog"`, `role="search"`, `role="textbox"`), parent hierarchy traversal, and localized-label-safe checks.
+* **Anti-fragility:** Instead of relying on volatile, minified, or generated LinkedIn CSS classes, the detector looks for stable semantic structures. It uses a **scored multi-signal approach** combining `contenteditable="true"` properties, accessible role types (`role="textbox"`), current URL pathnames (`/sharing/compose`), optional dialog wrappers (`role="dialog"`, `aria-modal="true"`), parent hierarchy traversal, and localized-label-safe checks.
 * **Dynamic Modals & SPA Navigation:** Handled efficiently using **document-level event delegation** (`focusin` and `click` listeners) which captures dynamically generated dialog editors without continuous DOM polling or expensive `MutationObserver` overhead. Rather than monkey-patching the History API in the isolated content-script world, route changes are tracked by re-evaluating the URL whenever user interaction occurs or on `popstate` events, resetting the active editor cached reference.
 
 ### Running Editor Detection Tests
@@ -212,10 +212,40 @@ node tests/editor-detector.test.js
 
 ---
 
+## Text Selection Management (Phase 6)
+
+The extension contains a memory-only selection manager API in `src/content/selection-manager.js` that tracks, preserves, and restores user-selected text boundaries.
+
+### How Selections are Validated
+A selection is classified as valid only when:
+* A non-collapsed range is actively highlighted inside the browser window.
+* The selected content is not empty or composed entirely of whitespace.
+* Both start and end boundaries resolve to the exact same supported LinkedIn post-editor.
+* The editor and the selected text nodes remain attached to the document body.
+
+### Cloned Range Storage & Stale Range Rejection
+* **In-Memory Range Capture:** Valid selections are copied in memory using `Range.cloneRange()` alongside selection direction metadata (RTL vs LTR).
+* **Automatic Eviction:** Stale ranges are immediately cleared when the editor is disconnected, boundary nodes are removed, route changes occur, or the post modal is closed.
+
+### Protected Interaction Support for Toolbar
+To support the future floating formatting toolbar, the manager offers a state-locking mechanism (`beginProtectedInteraction` / `endProtectedInteraction` / `isExtensionElement`). During a protected interaction, focus shifts to toolbar buttons will not cause the selection manager to prematurely wipe the saved range.
+
+### Privacy Behavior
+* The selection manager operates entirely in local memory.
+* Selected text contents are never stored in `chrome.storage`, written to persistent disks, logged to the console, or transmitted over network sockets.
+
+### Running Selection Manager Tests
+To execute the zero-dependency SelectionManager unit tests, run:
+```bash
+node tests/selection-manager.test.js
+```
+
+---
+
 ## Current Development Status
 
-* **Active Phase:** Phase 5 — LinkedIn Editor Detection (Implementation completed, pending manual LinkedIn browser verification).
-* **Next Phase:** Phase 6 — Text Selection Management.
+* **Active Phase:** Phase 6 — Text Selection Management (Implementation completed, pending manual LinkedIn browser verification).
+* **Next Phase:** Phase 7 — Floating Formatting Toolbar.
 
 ---
 
