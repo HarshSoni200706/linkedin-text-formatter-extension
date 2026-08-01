@@ -25,6 +25,7 @@
       ],
       "js": [
         "src/content/editor-manager.js",
+        "src/content/selection-manager.js",
         "src/content/content-script.js"
       ],
       "css": [

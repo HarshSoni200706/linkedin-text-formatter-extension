@@ -2,7 +2,7 @@
  * content-script.js
  *
  * Primary entry point for the content script injected into LinkedIn pages.
- * Responsible for initializing sub-managers (editor, selection, toolbar) and orchestrating events.
+ * Coordinates the scored multi-signal editor detector and selection manager.
  */
 
 (function() {
@@ -16,6 +16,9 @@
   window.LinkedInTextFormatter.initialized = true;
 
   console.log('[LinkedIn Text Formatter] Editor detector initialized.');
+  if (window.LinkedInTextFormatter.SelectionManager) {
+    console.log('[LinkedIn Text Formatter] Selection manager initialized.');
+  }
 
   // Keep track of the last checked editor element
   let lastCheckedElement = null;

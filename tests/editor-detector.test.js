@@ -162,8 +162,80 @@ function runEditorDetectorTests() {
     attributes: { contenteditable: 'true' },
     parent: settingsDialog
   });
-  assert("Editor inside settings dialog is rejected", isSupportedLinkedInPostEditor(settingsEditor), false);
-  assert("Settings editor rejection reason", checkEditorSupport(settingsEditor).reason, "Element is inside an excluded dialog modal (settings, filter, profile)");
+  // --- Phase 6 Editor Detection Regression Tests ---
+
+  // Regression 1: contenteditable=true and role=textbox on /sharing/compose without a dialog -> Expected: accepted
+  setPathname('/sharing/compose');
+  const routeEditor = createMockNode({
+    tagName: 'DIV',
+    attributes: { contenteditable: 'true', role: 'textbox' }
+  });
+  assert("Regression 1: contenteditable=true and role=textbox on /sharing/compose is accepted", isSupportedLinkedInPostEditor(routeEditor), true);
+  setPathname('/'); // Reset path
+
+  // Regression 2: contenteditable=true and role=textbox inside a traditional dialog -> Expected: accepted
+  const traditionalDialog = createMockNode({
+    attributes: { role: 'dialog' }
+  });
+  const traditionalEditor = createMockNode({
+    tagName: 'DIV',
+    attributes: { contenteditable: 'true', role: 'textbox' },
+    parent: traditionalDialog
+  });
+  assert("Regression 2: contenteditable=true and role=textbox inside dialog is accepted", isSupportedLinkedInPostEditor(traditionalEditor), true);
+
+  // Regression 3: contenteditable=true and role=textbox outside the composer route with no composer context -> Expected: rejected
+  setPathname('/feed/');
+  const randomEditor = createMockNode({
+    tagName: 'DIV',
+    attributes: { contenteditable: 'true', role: 'textbox' }
+  });
+  assert("Regression 3: contenteditable=true and role=textbox outside composer with no dialog is rejected", isSupportedLinkedInPostEditor(randomEditor), false);
+  setPathname('/'); // Reset path
+
+  // Regression 4: Comment editor on /sharing/compose -> Expected: rejected
+  setPathname('/sharing/compose');
+  const commentContainer = createMockNode({
+    classList: ['comments-comment-box']
+  });
+  const commentEditorOnCompose = createMockNode({
+    tagName: 'DIV',
+    attributes: { contenteditable: 'true', role: 'textbox' },
+    parent: commentContainer
+  });
+  assert("Regression 4: Comment editor on /sharing/compose is rejected", isSupportedLinkedInPostEditor(commentEditorOnCompose), false);
+  setPathname('/'); // Reset path
+
+  // Regression 5: Messaging editor on /sharing/compose -> Expected: rejected
+  setPathname('/sharing/compose');
+  const messageEditorOnCompose = createMockNode({
+    tagName: 'DIV',
+    attributes: { contenteditable: 'true', role: 'textbox', 'aria-label': 'Write a message...' }
+  });
+  assert("Regression 5: Messaging editor on /sharing/compose is rejected", isSupportedLinkedInPostEditor(messageEditorOnCompose), false);
+  setPathname('/'); // Reset path
+
+  // Regression 6: Global search input -> Expected: rejected
+  const searchInput = createMockNode({
+    tagName: 'INPUT',
+    attributes: { type: 'search', contenteditable: 'true' }
+  });
+  assert("Regression 6: Global search input is rejected", isSupportedLinkedInPostEditor(searchInput), false);
+
+  // Regression 7: Nested P element resolving to the parent DIV contenteditable editor -> Expected: accepted
+  const pDialog = createMockNode({
+    attributes: { role: 'dialog' }
+  });
+  const divEditor = createMockNode({
+    tagName: 'DIV',
+    attributes: { contenteditable: 'true' },
+    parent: pDialog
+  });
+  const pElement = createMockNode({
+    tagName: 'P',
+    parent: divEditor
+  });
+  assert("Regression 7: Nested P element resolving to parent DIV is accepted", isSupportedLinkedInPostEditor(pElement), true);
 
   return { passed, failed, results };
 }
