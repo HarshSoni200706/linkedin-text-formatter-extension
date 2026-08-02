@@ -486,7 +486,7 @@ Create a small toolbar that appears near selected text and provides the five for
 ### Toolbar Lifecycle
 
 - [x] Show only when valid text is selected.
-- [ ] Hide after formatting.
+- [x] Hide after formatting.
 - [x] Hide when clicking outside.
 - [x] Hide when pressing Escape.
 - [x] Hide when the selection is cleared.
