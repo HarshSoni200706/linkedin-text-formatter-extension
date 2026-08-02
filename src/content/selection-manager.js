@@ -43,16 +43,52 @@
     return 'forward';
   }
 
-  // Check if an element belongs to the extension toolbar or other controls
-  function isExtensionElement(element) {
+  /**
+   * Check if an element or event path belongs to the extension toolbar or controls.
+   * Supports event.composedPath(), element.closest(), and DOM ancestor traversal.
+   */
+  function isExtensionElement(element, event) {
+    if (event && typeof event.composedPath === 'function') {
+      try {
+        const path = event.composedPath();
+        for (let i = 0; i < path.length; i++) {
+          const node = path[i];
+          if (node && node.getAttribute) {
+            if (
+              node.getAttribute('data-linkedin-text-formatter') === 'true' ||
+              node.id === 'ltf-floating-toolbar'
+            ) {
+              return true;
+            }
+          }
+        }
+      } catch (err) {
+        // Ignore composedPath errors and fallback
+      }
+    }
+
     if (!element) return false;
+
+    if (typeof element.closest === 'function') {
+      try {
+        const match = element.closest('[data-linkedin-text-formatter="true"], #ltf-floating-toolbar');
+        if (match) return true;
+      } catch (err) {
+        // Fallback to loop
+      }
+    }
+
     let current = element;
     while (current) {
-      if (current.getAttribute && current.getAttribute('data-linkedin-text-formatter') === 'true') {
+      if (
+        (current.getAttribute && current.getAttribute('data-linkedin-text-formatter') === 'true') ||
+        current.id === 'ltf-floating-toolbar'
+      ) {
         return true;
       }
-      current = current.parentElement;
+      current = current.parentElement || current.parentNode;
     }
+
     return false;
   }
 
@@ -250,13 +286,13 @@
     return state.isProtected;
   }
 
-  // Listeners
-  document.addEventListener('selectionchange', handleSelectionChange);
-
-  document.addEventListener('mousedown', (event) => {
-    if (state.isProtected || isExtensionElement(event.target)) {
+  // Document-level event handlers for outside click detection & protection
+  function handleDocumentPointerOrMouse(event) {
+    if (state.isProtected || isExtensionElement(event.target, event)) {
+      beginProtectedInteraction();
       return;
     }
+
     const resolver = window.LinkedInTextFormatter.resolveToEditableRoot;
     if (resolver) {
       const root = resolver(event.target);
@@ -264,7 +300,13 @@
         clearSavedSelection();
       }
     }
-  });
+  }
+
+  // Listeners
+  document.addEventListener('selectionchange', handleSelectionChange);
+
+  document.addEventListener('pointerdown', handleDocumentPointerOrMouse, { capture: true });
+  document.addEventListener('mousedown', handleDocumentPointerOrMouse, { capture: true });
 
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
