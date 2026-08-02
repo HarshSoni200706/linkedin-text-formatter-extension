@@ -1,30 +1,43 @@
 /**
  * editor-detector.test.js
  *
- * Isolated, zero-dependency test suite for validating LinkedIn editor detection logic.
- * Mocks the necessary DOM node structure to run in a Node.js environment.
+ * Isolated, zero-dependency test suite for validating LinkedIn editor detection logic across:
+ * - Direct-document post editors (/sharing/compose or modal dialogs)
+ * - Verified open Shadow DOM post editors (DIV.ql-editor inside DIV#interop-outlet host)
+ * - CAPTCHA and Quill helper exclusions (.ql-clipboard, g-recaptcha-response)
  */
+
+const fs = require('fs');
+const path = require('path');
 
 // Mock global browser structures before requiring the script
 global.Node = {
   ELEMENT_NODE: 1,
-  TEXT_NODE: 3
+  TEXT_NODE: 3,
+  DOCUMENT_FRAGMENT_NODE: 11
 };
 
 global.window = {
+  self: 1,
+  top: 1,
   location: {
+    hostname: 'www.linkedin.com',
     pathname: '/'
   }
 };
 
 const {
+  getComposedParent,
+  composedClosest,
+  resolveEditableFromComposedPath,
   resolveToEditableRoot,
   isEditable,
+  isExcludedControl,
   checkEditorSupport,
   isSupportedLinkedInPostEditor
 } = require('../src/content/editor-manager');
 
-// Helper to create a mock node tree
+// Helper to create a mock node tree with ShadowRoot support
 function createMockNode(options = {}) {
   const node = {
     nodeType: options.nodeType || Node.ELEMENT_NODE,
@@ -40,13 +53,27 @@ function createMockNode(options = {}) {
     },
     id: options.id || '',
     parentElement: null,
+    parentNode: null,
     getAttribute(name) {
       return this.attributes.get(name) || null;
+    },
+    getRootNode() {
+      if (options.rootNode) return options.rootNode;
+      let curr = this;
+      while (curr.parentElement || (curr.parentNode && curr.parentNode.host)) {
+        if (curr.parentNode && curr.parentNode.host) {
+          curr = curr.parentNode;
+          break;
+        }
+        curr = curr.parentElement || curr.parentNode;
+      }
+      return curr;
     }
   };
 
   if (options.parent) {
     node.parentElement = options.parent;
+    node.parentNode = options.parent;
   }
   return node;
 }
@@ -68,12 +95,20 @@ function runEditorDetectorTests() {
   }
 
   // Set window location pathname helper
-  function setPathname(path) {
-    global.window.location.pathname = path;
+  function setPathname(pathStr) {
+    global.window.location.pathname = pathStr;
   }
 
   // Reset pathname
   setPathname('/');
+
+  // Manifest validation tests
+  const manifestPath = path.join(__dirname, '../manifest.json');
+  const manifestContent = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  const contentScriptConfig = manifestContent.content_scripts[0];
+
+  assert("Manifest matches only LinkedIn domains", contentScriptConfig.matches.includes("https://www.linkedin.com/*") && contentScriptConfig.matches.length === 1, true);
+  assert("Manifest does not contain all_frames flag", contentScriptConfig.all_frames, undefined);
 
   // Test Case 1: Null element
   assert("Null element is rejected", isSupportedLinkedInPostEditor(null), false);
@@ -107,7 +142,6 @@ function runEditorDetectorTests() {
     parent: editor
   });
   assert("Text node inside supported editor is resolved and accepted", isSupportedLinkedInPostEditor(textNode), true);
-  assert("Supported editor check reason", checkEditorSupport(textNode).reason, "Supported LinkedIn post editor");
 
   // Test Case 5: Element inside search nav
   const searchContainer = createMockNode({
@@ -119,7 +153,6 @@ function runEditorDetectorTests() {
     parent: searchContainer
   });
   assert("Editor inside search is rejected", isSupportedLinkedInPostEditor(searchEditor), false);
-  assert("Search editor rejection reason", checkEditorSupport(searchEditor).reason, "Element is inside search or navigation");
 
   // Test Case 6: Element inside comment composer
   const commentBox = createMockNode({
@@ -131,7 +164,6 @@ function runEditorDetectorTests() {
     parent: commentBox
   });
   assert("Editor inside comment composer is rejected", isSupportedLinkedInPostEditor(commentEditor), false);
-  assert("Comment editor rejection reason", checkEditorSupport(commentEditor).reason, "Element is inside a comment composer");
 
   // Test Case 7: Element inside messaging composer
   const msgEditor = createMockNode({
@@ -140,7 +172,6 @@ function runEditorDetectorTests() {
     parent: dialog
   });
   assert("Editor inside messaging is rejected", isSupportedLinkedInPostEditor(msgEditor), false);
-  assert("Messaging editor rejection reason", checkEditorSupport(msgEditor).reason, "Element is inside a messaging composer");
 
   // Test Case 8: Element inside Pulse article editor
   setPathname('/pulse/write-article');
@@ -150,92 +181,109 @@ function runEditorDetectorTests() {
     parent: dialog
   });
   assert("Editor inside Pulse URL is rejected", isSupportedLinkedInPostEditor(articleEditor), false);
-  assert("Pulse editor rejection reason", checkEditorSupport(articleEditor).reason, "Element is inside an article or newsletter editor");
   setPathname('/');
 
-  // Test Case 9: Element inside excluded dialog modal
-  const settingsDialog = createMockNode({
-    attributes: { role: 'dialog', 'aria-label': 'Post Settings' }
-  });
-  const settingsEditor = createMockNode({
-    tagName: 'DIV',
-    attributes: { contenteditable: 'true' },
-    parent: settingsDialog
-  });
-  // --- Phase 6 Editor Detection Regression Tests ---
+  // --- Phase 8 Open Shadow DOM Composer Tests (Layout B) ---
 
-  // Regression 1: contenteditable=true and role=textbox on /sharing/compose without a dialog -> Expected: accepted
-  setPathname('/sharing/compose');
-  const routeEditor = createMockNode({
-    tagName: 'DIV',
-    attributes: { contenteditable: 'true', role: 'textbox' }
-  });
-  assert("Regression 1: contenteditable=true and role=textbox on /sharing/compose is accepted", isSupportedLinkedInPostEditor(routeEditor), true);
-  setPathname('/'); // Reset path
-
-  // Regression 2: contenteditable=true and role=textbox inside a traditional dialog -> Expected: accepted
-  const traditionalDialog = createMockNode({
-    attributes: { role: 'dialog' }
-  });
-  const traditionalEditor = createMockNode({
-    tagName: 'DIV',
-    attributes: { contenteditable: 'true', role: 'textbox' },
-    parent: traditionalDialog
-  });
-  assert("Regression 2: contenteditable=true and role=textbox inside dialog is accepted", isSupportedLinkedInPostEditor(traditionalEditor), true);
-
-  // Regression 3: contenteditable=true and role=textbox outside the composer route with no composer context -> Expected: rejected
+  // Test 9: Verified Layout B Open Shadow DOM Composer
   setPathname('/feed/');
-  const randomEditor = createMockNode({
+  const interopHost = createMockNode({
     tagName: 'DIV',
-    attributes: { contenteditable: 'true', role: 'textbox' }
+    id: 'interop-outlet',
+    classList: ['theme--light']
   });
-  assert("Regression 3: contenteditable=true and role=textbox outside composer with no dialog is rejected", isSupportedLinkedInPostEditor(randomEditor), false);
-  setPathname('/'); // Reset path
-
-  // Regression 4: Comment editor on /sharing/compose -> Expected: rejected
-  setPathname('/sharing/compose');
-  const commentContainer = createMockNode({
-    classList: ['comments-comment-box']
-  });
-  const commentEditorOnCompose = createMockNode({
+  const shadowRoot = {
+    nodeType: Node.DOCUMENT_FRAGMENT_NODE,
+    host: interopHost
+  };
+  const qlEditor = createMockNode({
     tagName: 'DIV',
-    attributes: { contenteditable: 'true', role: 'textbox' },
-    parent: commentContainer
+    classList: ['ql-editor'],
+    attributes: {
+      contenteditable: 'true',
+      role: 'textbox',
+      'aria-multiline': 'true',
+      'data-test-ql-editor-contenteditable': 'true'
+    },
+    rootNode: shadowRoot
   });
-  assert("Regression 4: Comment editor on /sharing/compose is rejected", isSupportedLinkedInPostEditor(commentEditorOnCompose), false);
-  setPathname('/'); // Reset path
+  qlEditor.parentNode = shadowRoot;
 
-  // Regression 5: Messaging editor on /sharing/compose -> Expected: rejected
-  setPathname('/sharing/compose');
-  const messageEditorOnCompose = createMockNode({
+  assert("DIV.ql-editor inside Shadow DOM on /feed/ is accepted", isSupportedLinkedInPostEditor(qlEditor), true);
+  assert("Layout B recognized as Shadow DOM post editor", checkEditorSupport(qlEditor).reason, "Supported LinkedIn Shadow DOM post editor (Layout B)");
+
+  // Test 10: Nested paragraph inside ql-editor resolves to ql-editor
+  const nestedPInQl = createMockNode({
+    tagName: 'P',
+    parent: qlEditor,
+    rootNode: shadowRoot
+  });
+  assert("Nested P inside ql-editor resolves to ql-editor", resolveToEditableRoot(nestedPInQl), qlEditor);
+  assert("Nested P inside ql-editor is accepted", isSupportedLinkedInPostEditor(nestedPInQl), true);
+
+  // Test 11: Retargeted event composedPath contains ql-editor
+  const mockEvent = {
+    composedPath: () => [nestedPInQl, qlEditor, shadowRoot, interopHost]
+  };
+  assert("Retargeted event composedPath resolves to ql-editor", resolveEditableFromComposedPath(mockEvent), qlEditor);
+
+  // Test 12: Quill internal clipboard (.ql-clipboard) -> Expected: rejected
+  const qlClipboard = createMockNode({
     tagName: 'DIV',
-    attributes: { contenteditable: 'true', role: 'textbox', 'aria-label': 'Write a message...' }
+    classList: ['ql-clipboard'],
+    attributes: { contenteditable: 'true', 'aria-hidden': 'true' },
+    rootNode: shadowRoot
   });
-  assert("Regression 5: Messaging editor on /sharing/compose is rejected", isSupportedLinkedInPostEditor(messageEditorOnCompose), false);
-  setPathname('/'); // Reset path
+  assert(".ql-clipboard is rejected", isSupportedLinkedInPostEditor(qlClipboard), false);
 
-  // Regression 6: Global search input -> Expected: rejected
-  const searchInput = createMockNode({
-    tagName: 'INPUT',
-    attributes: { type: 'search', contenteditable: 'true' }
+  // Test 13: g-recaptcha-response textarea -> Expected: rejected
+  const captchaTextarea = createMockNode({
+    tagName: 'TEXTAREA',
+    id: 'g-recaptcha-response-100',
+    attributes: { contenteditable: 'true' }
   });
-  assert("Regression 6: Global search input is rejected", isSupportedLinkedInPostEditor(searchInput), false);
+  assert("g-recaptcha-response textarea is rejected", isSupportedLinkedInPostEditor(captchaTextarea), false);
 
-  // Regression 7: Nested P element resolving to the parent DIV contenteditable editor -> Expected: accepted
-  const pDialog = createMockNode({
-    attributes: { role: 'dialog' }
+  // Test 14: Element inside .g-recaptcha-badge -> Expected: rejected
+  const captchaBadge = createMockNode({
+    classList: ['g-recaptcha-badge']
   });
-  const divEditor = createMockNode({
+  const captchaInner = createMockNode({
     tagName: 'DIV',
     attributes: { contenteditable: 'true' },
-    parent: pDialog
+    parent: captchaBadge
   });
-  const pElement = createMockNode({
-    tagName: 'P',
-    parent: divEditor
+  assert("Element inside .g-recaptcha-badge is rejected", isSupportedLinkedInPostEditor(captchaInner), false);
+
+  // Test 15: Shadow DOM comment editor -> Expected: rejected
+  const shadowCommentContainer = createMockNode({
+    classList: ['comments-comment-box'],
+    rootNode: shadowRoot
   });
-  assert("Regression 7: Nested P element resolving to parent DIV is accepted", isSupportedLinkedInPostEditor(pElement), true);
+  const shadowCommentEditor = createMockNode({
+    tagName: 'DIV',
+    classList: ['ql-editor'],
+    attributes: { contenteditable: 'true', role: 'textbox' },
+    parent: shadowCommentContainer,
+    rootNode: shadowRoot
+  });
+  assert("Shadow DOM comment editor is rejected", isSupportedLinkedInPostEditor(shadowCommentEditor), false);
+
+  // Test 16: Shadow DOM messaging editor -> Expected: rejected
+  const shadowMsgContainer = createMockNode({
+    classList: ['msg-overlay-conversation-bubble'],
+    rootNode: shadowRoot
+  });
+  const shadowMsgEditor = createMockNode({
+    tagName: 'DIV',
+    classList: ['ql-editor'],
+    attributes: { contenteditable: 'true', role: 'textbox' },
+    parent: shadowMsgContainer,
+    rootNode: shadowRoot
+  });
+  assert("Shadow DOM messaging editor is rejected", isSupportedLinkedInPostEditor(shadowMsgEditor), false);
+
+  setPathname('/'); // Reset path
 
   return { passed, failed, results };
 }

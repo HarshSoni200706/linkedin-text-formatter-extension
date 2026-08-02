@@ -25,9 +25,13 @@
       ],
       "js": [
         "src/shared/constants.js",
+        "src/formatter/unicode-maps.js",
+        "src/formatter/text-normalizer.js",
+        "src/formatter/text-formatter.js",
         "src/content/editor-manager.js",
         "src/content/selection-manager.js",
         "src/content/toolbar-manager.js",
+        "src/content/text-replacement-manager.js",
         "src/content/content-script.js"
       ],
       "css": [

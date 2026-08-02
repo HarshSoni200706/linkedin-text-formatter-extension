@@ -58,12 +58,12 @@ To load the extension manually into Google Chrome for testing:
 
 ### Verifying Extension Components
 
-- **Testing the Popup:** Click the extension icon in Chrome's toolbar (or pinned extensions menu). The popup should open displaying the Phase 3 status message.
+- **Testing the Popup:** Click the extension icon in Chrome's toolbar (or pinned extensions menu). The popup should open displaying the current status message.
 - **Testing the Content Script:**
   1. Open [LinkedIn](https://www.linkedin.com/).
   2. Open Chrome Developer Tools (`F12` or `Ctrl+Shift+I` / `Cmd+Option+I`).
   3. Open the **Console** tab.
-  4. Look for the message: `[LinkedIn Text Formatter] Content script loaded successfully on LinkedIn.`
+  4. Look for the message: `[LinkedIn Text Formatter] Editor detector initialized.`
 
 ---
 
@@ -88,23 +88,6 @@ Punctuation, emojis, hashtags, URLs, and non-Latin alphabets (such as Chinese, H
 
 ### Idempotency & Normalization
 To prevent stacked transformations or corrupted text, the formatting engine automatically passes all input through a normalizer (`src/formatter/text-normalizer.js`) before applying a new style. The normalizer maps styled Unicode characters back to their plain ASCII counterparts and strips existing U+0332/U+0333 combining marks.
-
----
-
-## Running Formatter Tests
-
-The formatter test suite runs 26 test cases verifying various text conversions, edge cases, and normalization behaviors.
-
-### Running Tests via Browser (Zero Dependencies)
-Since Node.js is not required, tests can be run directly inside any modern web browser:
-1. Open the file `tests/runner.html` in your browser.
-2. The page will dynamically execute `tests/formatter.test.js` and render the pass/fail results in a clear green/red interface.
-
-### Running Tests via Node.js
-If Node.js is available on your system, you can run the test suite in the terminal:
-```bash
-node tests/formatter.test.js
-```
 
 ---
 
@@ -133,7 +116,8 @@ linkedin-text-formatter-extension/
 │   │   ├── content-script.js
 │   │   ├── selection-manager.js
 │   │   ├── editor-manager.js
-│   │   └── toolbar-manager.js
+│   │   ├── toolbar-manager.js
+│   │   └── text-replacement-manager.js
 │   │
 │   ├── formatter/
 │   │   ├── unicode-maps.js
@@ -163,135 +147,105 @@ linkedin-text-formatter-extension/
 │
 └── tests/
     ├── formatter.test.js
+    ├── editor-detector.test.js
+    ├── selection-manager.test.js
+    ├── toolbar-manager.test.js
+    ├── text-replacement-manager.test.js
     ├── runner.html
     └── test-cases.md
 ```
 
 ---
 
-## LinkedIn Editor Detection (Phase 5)
+## Text Replacement Engine (Phase 8)
 
-The extension includes a highly robust, modular editor-detection API located in `src/content/editor-manager.js`.
+Phase 8 connects the floating toolbar to the Unicode formatting engine via `src/content/text-replacement-manager.js`.
 
-### Verification Status Matrix
+### How Formatting is Applied
+When a toolbar action button is activated:
+1. **Context & Selection Validation:** Confirms valid active selection, range attachment, and editor connectivity.
+2. **Entity Protection Check:** Inspects selected contents for atomic non-editable entities (e.g., LinkedIn mentions, entity cards, or `contenteditable="false"` nodes). If present, formatting aborts safely.
+3. **Selected-Text Reading & Conversion:** Reads `range.toString()`, normalizes existing Unicode marks, and applies the chosen style (`bold`, `italic`, `bold-italic`, `underline`, `double-underline`).
+4. **Insertion Strategy:** 
+   - **Primary Strategy:** Uses `document.execCommand('insertText', false, formattedText)` while the range is restored. This native browser text command replaces the selected range, triggers LinkedIn's editor state listeners, and preserves browser native `Ctrl+Z` undo history.
+   - **Fallback Strategy:** Uses DOM Range operations (`range.deleteContents()`, `range.insertNode(textNode)`), dispatches synthetic input events, and performs safe rollback if an exception occurs.
+5. **Event Notification:** Dispatches a composed, bubbling `InputEvent` (`inputType: 'insertText'`) on the editor element to notify LinkedIn's post composer of state changes.
+6. **Caret Placement & Focus:** Collapses the caret immediately after the inserted formatted text, restores editor focus, and allows the user to continue typing naturally.
+7. **Toolbar Hiding & Cleanup:** Hides the toolbar with reason `'formatting-applied'`, clears the saved selection, and ends protected interaction safely.
 
-* **Directly Verified Behavior (Offline Mock DOM):**
-  * Resolution of child/text nodes to contenteditable roots.
-  * Rejection of `input` and `textarea` elements.
-  * Exclusion of search containers (via role `"search"`, `"searchbox"`, or class matches).
-  * Exclusions for comments and messaging overlays using structural selectors.
-  * Rejection of excluded dialog boxes (settings, filters, profiles).
-  * Verification of the post composer dialog modal ancestor OR route-based `/sharing/compose` composer.
-* **Structurally Inferred Behavior (Production Hypotheses):**
-  * It is inferred that LinkedIn post composers will reside within wrappers having `role="dialog"`, `aria-modal="true"`, or classes like `share-creation-state`/`share-box`, OR on the `/sharing/compose` composer page route combined with a `role="textbox"` contenteditable.
-  * It is inferred that comment editors will be housed under ancestors containing class tags with `"comment"` (such as `comments-comment-box`).
-  * It is inferred that messaging editors will be nested inside forms/areas containing class tags with `"msg-"` or `"messaging"`.
-* **Manual LinkedIn testing still required:**
-  * Live verification of editor identification inside the actual LinkedIn web app (both modal popup and sharing composer page).
-  * Verification that localized interfaces (non-English layouts) correctly resolve structures and exclude comments/messages (the English `aria-label`/`placeholder` checks have been demoted to secondary fallback status to aid localization, but manual confirmation is essential).
-  * Route changes and dynamic modal opening sequence on the live website.
+### Privacy & Anti-Duplicate Guarantees
+- **Local Memory Processing:** No text contents are stored in `chrome.storage`, written to disk, transmitted over network sockets, or logged to console.
+- **Duplicate Prevention:** Executes within an `isTransactionRunning` lock to prevent rapid repeated clicks or dual mouse/keyboard activations from triggering multiple replacements.
 
-### Supported Editors
-* **Create a Post Editor:** The main rich text editor inside the post-creation modal popup (on LinkedIn Home page, Feed, Groups, etc.) as well as the full-page route-based sharing composer (`/sharing/compose`).
+---
 
-### Intentionally Excluded Editors
-* **Search and Navigation inputs:** All input/textarea fields in search bars or filters.
-* **Comment Editors:** Rich comment-composer boxes under posts.
-* **Messaging Editors:** Chat/messaging composers (overlays and full message page).
-* **Profile / Article Editors:** Profile-edit fields and Pulse article/newsletter textareas.
+## Supported LinkedIn Post Editor Layouts
 
-### Robust Detection Details
-* **Anti-fragility:** Instead of relying on volatile, minified, or generated LinkedIn CSS classes, the detector looks for stable semantic structures. It uses a **scored multi-signal approach** combining `contenteditable="true"` properties, accessible role types (`role="textbox"`), current URL pathnames (`/sharing/compose`), optional dialog wrappers (`role="dialog"`, `aria-modal="true"`), parent hierarchy traversal, and localized-label-safe checks.
-* **Dynamic Modals & SPA Navigation:** Handled efficiently using **document-level event delegation** (`focusin` and `click` listeners) which captures dynamically generated dialog editors without continuous DOM polling or expensive `MutationObserver` overhead. Rather than monkey-patching the History API in the isolated content-script world, route changes are tracked by re-evaluating the URL whenever user interaction occurs or on `popstate` events, resetting the active editor cached reference.
+The extension supports both verified LinkedIn post composer layouts across different accounts and interface variations:
 
-### Running Editor Detection Tests
-To verify the detector's logic offline in a simulated environment, execute the zero-dependency Node.js test runner:
+### Layout A — Direct-Document Composer
+- **Pathname / Route:** `/sharing/compose` or rendered inside a standard modal dialog (`[role="dialog"]` or `[aria-modal="true"]`).
+- **Editor Element:** `DIV[contenteditable="true"][role="textbox"]`.
+- **Toolbar Host:** Attaches inside the active composer dialog element or falls back to `document.body`.
+
+### Layout B — Open Shadow DOM Composer
+- **Pathname / Route:** Main feed (`/feed/`) or inline views without requiring a modal dialog container.
+- **Editor Element:** `DIV.ql-editor` with `contenteditable="true"` and `role="textbox"`.
+- **Immediate Host:** `DIV#interop-outlet` host containing an open `ShadowRoot`.
+- **Toolbar Host:** Attached directly inside the open `ShadowRoot` so the floating toolbar shares the composer's visual context. An extension-owned `<style data-linkedin-text-formatter-style="true">` element is automatically injected into the `ShadowRoot` to style the toolbar buttons seamlessly.
+
+### Single-Instance Toolbar Architecture & Selection Coalescing
+- **Canonical Element Tracking:** `ToolbarManager` maintains a single in-memory reference (`toolbarElement`). When switching between document host and `ShadowRoot`, the exact same element is dynamically reparented using `appendChild(toolbarElement)`.
+- **Root-Aware Duplicate Cleanup:** `cleanupDuplicateToolbars` scans target roots and main document for orphaned extension elements, ensuring exactly one toolbar exists in the DOM.
+- **Selection Event Coalescing:** Calls to `ToolbarManager.show()` are wrapped in `requestAnimationFrame` to merge rapid intermediate selection updates during drag-selection into a single repositioning calculation.
+- **Single Subscription Rule:** `ToolbarManager.initialize()` enforces a strict single subscription (`selectionSubscriptionCount === 1`) to `SelectionManager.onSelectionValid`.
+
+### Explicitly Excluded Controls
+- **Quill Helper Elements:** `.ql-clipboard` and hidden Quill clipboard containers are explicitly rejected.
+- **CAPTCHA Textareas:** `textarea` controls starting with `g-recaptcha-response` and elements inside `.g-recaptcha-badge` are rejected.
+- **Auxiliary Editors:** Comment fields, messaging bubbles, search boxes, and Pulse article editors are strictly excluded.
+- **Closed Shadow DOM Limitation:** Custom components using closed ShadowRoots (`mode: "closed"`) cannot be accessed by browser extensions by web specification design.
+
+---
+
+## Running Automated Test Suites
+
+The extension contains 154 zero-dependency unit tests across 5 test suites.
+
+To run all automated tests in Terminal using Node.js:
 ```bash
+node tests/formatter.test.js
 node tests/editor-detector.test.js
-```
-
----
-
-## Text Selection Management (Phase 6)
-
-The extension contains a memory-only selection manager API in `src/content/selection-manager.js` that tracks, preserves, and restores user-selected text boundaries.
-
-### How Selections are Validated
-A selection is classified as valid only when:
-* A non-collapsed range is actively highlighted inside the browser window.
-* The selected content is not empty or composed entirely of whitespace.
-* Both start and end boundaries resolve to the exact same supported LinkedIn post-editor.
-* The editor and the selected text nodes remain attached to the document body.
-
-### Cloned Range Storage & Stale Range Rejection
-* **In-Memory Range Capture:** Valid selections are copied in memory using `Range.cloneRange()` alongside selection direction metadata (RTL vs LTR).
-* **Automatic Eviction:** Stale ranges are immediately cleared when the editor is disconnected, boundary nodes are removed, route changes occur, or the post modal is closed.
-
-### Protected Interaction Support for Toolbar
-To support the future floating formatting toolbar, the manager offers a state-locking mechanism (`beginProtectedInteraction` / `endProtectedInteraction` / `isExtensionElement`). During a protected interaction, focus shifts to toolbar buttons will not cause the selection manager to prematurely wipe the saved range.
-
-### Privacy Behavior
-* The selection manager operates entirely in local memory.
-* Selected text contents are never stored in `chrome.storage`, written to persistent disks, logged to the console, or transmitted over network sockets.
-
-### Running Selection Manager Tests
-To execute the zero-dependency SelectionManager unit tests, run:
-```bash
 node tests/selection-manager.test.js
+node tests/toolbar-manager.test.js
+node tests/text-replacement-manager.test.js
 ```
 
 ---
 
-## Floating Formatting Toolbar (Phase 7)
+## Cross-Account Verification & Testing Steps
 
-The extension includes a floating toolbar implementation in `src/content/toolbar-manager.js` and styling in `src/styles/content-toolbar.css`.
+To test both supported composer layouts manually:
 
-### When the Toolbar Appears
-* Appears automatically near a valid text selection made within LinkedIn's supported post creation editor.
-* Subscribes to `SelectionManager` events (`onSelectionValid` / `onSelectionInvalid`).
-* Hides immediately when the selection becomes invalid, collapsed, cleared, or when pressing `Escape`.
+1. **Test Layout A (Direct-Document / Modal Editor):**
+   - Log into account 1 on LinkedIn.
+   - Click "Start a post" on the main feed to open the composer modal dialog or visit `https://www.linkedin.com/sharing/compose`.
+   - Select text inside the post editor and verify the floating toolbar appears and formats text correctly.
 
-### Five Available Actions
-1. **Bold** (`B`)
-2. **Italic** (`I`)
-3. **Bold Italic** (`BI`)
-4. **Underline** (`U`)
-5. **Double Underline** (`U` with double underline styling)
-
-> **Note:** During Phase 7, buttons emit action requests to subscribers via `onFormatAction`. Text replacement and formatting are executed in Phase 8. Buttons do NOT modify LinkedIn post content during Phase 7.
-
-### Accessibility Behavior
-* Built with native `<button type="button">` elements.
-* Supports full keyboard navigation (`Tab`, `Shift + Tab`, `Enter`, `Space`).
-* Features distinct focus rings (`:focus-visible`) and high-contrast styling for both light and dark page themes.
-* Pressing `Escape` hides the toolbar cleanly.
-
-### Selection-Protection Behavior
-* Implements `pointerdown` and `mousedown` handlers calling `SelectionManager.beginProtectedInteraction()`.
-* Toolbar clicks do not steal focus or cause `SelectionManager` to clear the saved range prematurely.
-
-### Positioning Strategy
-* Uses viewport-relative coordinates (`position: fixed`) derived from `Range.getBoundingClientRect()`.
-* Automatically prefers placing above the selection, falling back below the selection or clamping within viewport margins (`8px`) if space is constrained.
-* Repositions on window resize and scroll using `requestAnimationFrame`.
-
-### Running Toolbar Manager Tests
-To execute the zero-dependency ToolbarManager unit tests, run:
-```bash
-node tests/toolbar-manager.test.js
-```
+2. **Test Layout B (Open Shadow DOM Editor):**
+   - Log into account 2 (or a multi-account profile with the updated interface).
+   - Click "Start a post" on `/feed/` to open the Shadow DOM composer (`DIV#interop-outlet`).
+   - Select text inside the `DIV.ql-editor` and verify the floating toolbar appears inside the open `ShadowRoot` and formats text cleanly.
 
 ---
 
 ## Current Development Status
 
-* **Active Phase:** Phase 7 — Floating Formatting Toolbar (Implementation completed, pending manual LinkedIn browser verification).
-* **Next Phase:** Phase 8 — Replace Selected Text Inside LinkedIn.
+* **Active Phase:** Phase 8 — Replace Selected Text Inside LinkedIn (Implementation complete with full Layout A & Layout B open Shadow DOM support, 154 Node unit tests passing, single-instance toolbar architecture verified, awaiting final live dual-account browser verification).
+* **Next Phase:** Phase 9 — Extension Popup & Settings.
 
 ---
 
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
-
-
