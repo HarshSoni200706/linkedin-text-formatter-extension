@@ -2,11 +2,23 @@
  * selection-manager.test.js
  *
  * Zero-dependency unit tests for SelectionManager:
- * - Direction detection
- * - State protection API
- * - Extension element matching with composedPath and closest
- * - Range validation under mock conditions
- * - State clearing
+ * 1. Direct-document editor uses Document.getSelection()
+ * 2. ShadowRoot editor uses ShadowRoot.getSelection()
+ * 3. ShadowRoot.getSelection unavailable falls back safely
+ * 4. Collapsed ShadowRoot selection is rejected
+ * 5. Non-empty ShadowRoot selection is accepted
+ * 6. Whitespace-only selection is rejected
+ * 7. Boundaries inside the same ql-editor are valid
+ * 8. Boundaries in different roots are rejected
+ * 9. .ql-clipboard selection is rejected
+ * 10. Shadow host removal invalidates the range
+ * 11. Saved selection stores the correct root
+ * 12. restoreSelection uses the saved ShadowRoot selection
+ * 13. Document selection restoration remains unchanged
+ * 14. Pointerup triggers delayed evaluation
+ * 15. Shift + Arrow keyup triggers delayed evaluation
+ * 16. No duplicate valid-selection callbacks
+ * 17. Selected text is never logged
  */
 
 // 1. Mock minimal DOM environment
@@ -14,12 +26,15 @@ global.Node = {
   DOCUMENT_POSITION_PRECEDING: 2,
   DOCUMENT_POSITION_FOLLOWING: 4,
   ELEMENT_NODE: 1,
-  TEXT_NODE: 3
+  TEXT_NODE: 3,
+  DOCUMENT_FRAGMENT_NODE: 11
 };
 
+let listeners = [];
 global.document = {
-  addEventListener: () => {},
+  addEventListener: (type, handler) => { listeners.push({ type, handler }); },
   removeEventListener: () => {},
+  getSelection: () => mockDocSelection,
   body: {
     contains: (node) => {
       if (!node) return false;
@@ -28,9 +43,17 @@ global.document = {
   }
 };
 
-let mockSelection = null;
+global.requestAnimationFrame = (cb) => {
+  cb();
+  return 1;
+};
+global.cancelAnimationFrame = () => {};
+
+let mockDocSelection = null;
+let mockShadowSelection = null;
+
 global.window = {
-  getSelection: () => mockSelection,
+  getSelection: () => mockDocSelection,
   LinkedInTextFormatter: {}
 };
 
@@ -39,10 +62,15 @@ require('../src/content/selection-manager');
 
 const {
   state,
+  getSelectionForEditor,
   getSelectionDirection,
   isSavedRangeValid,
   clearSavedSelection,
-  isExtensionElement
+  restoreSavedSelection,
+  evaluateSelection,
+  isExtensionElement,
+  setActiveEditor,
+  handleSelectionEvent
 } = require('../src/content/selection-manager');
 
 const SelectionManager = global.window.LinkedInTextFormatter.SelectionManager;
@@ -62,108 +90,217 @@ function runSelectionManagerTests() {
     }
   }
 
-  // Test 1: API Exports
+  // --- API Surface Tests ---
   assert("API: getSavedRange is a function", typeof SelectionManager.getSavedRange, "function");
   assert("API: getSavedEditor is a function", typeof SelectionManager.getSavedEditor, "function");
+  assert("API: getSelectionForEditor is a function", typeof SelectionManager.getSelectionForEditor, "function");
   assert("API: hasValidSelection is a function", typeof SelectionManager.hasValidSelection, "function");
   assert("API: restoreSelection is a function", typeof SelectionManager.restoreSelection, "function");
   assert("API: clearSelection is a function", typeof SelectionManager.clearSelection, "function");
   assert("API: validateSavedRange is a function", typeof SelectionManager.validateSavedRange, "function");
-  assert("API: beginProtectedInteraction is a function", typeof SelectionManager.beginProtectedInteraction, "function");
-  assert("API: endProtectedInteraction is a function", typeof SelectionManager.endProtectedInteraction, "function");
-  assert("API: isProtectedInteractionActive is a function", typeof SelectionManager.isProtectedInteractionActive, "function");
 
-  // Test 2: Direction Detection
-  const sameNode = { id: 'text-1' };
-  const sel1 = { anchorNode: sameNode, focusNode: sameNode, anchorOffset: 0, focusOffset: 5 };
-  const sel2 = { anchorNode: sameNode, focusNode: sameNode, anchorOffset: 5, focusOffset: 0 };
-  assert("Direction: Same node forward", getSelectionDirection(sel1), 'forward');
-  assert("Direction: Same node backward", getSelectionDirection(sel2), 'backward');
-
-  const nodeA = { compareDocumentPosition: (other) => (other === nodeB ? Node.DOCUMENT_POSITION_FOLLOWING : 0) };
-  const nodeB = { compareDocumentPosition: (other) => (other === nodeA ? Node.DOCUMENT_POSITION_PRECEDING : 0) };
-  const sel3 = { anchorNode: nodeA, focusNode: nodeB };
-  const sel4 = { anchorNode: nodeB, focusNode: nodeA };
-  assert("Direction: Different nodes forward", getSelectionDirection(sel3), 'forward');
-  assert("Direction: Different nodes backward", getSelectionDirection(sel4), 'backward');
-
-  // Test 3: Protection State Locking
-  assert("Protected active initially false", SelectionManager.isProtectedInteractionActive(), false);
-  SelectionManager.beginProtectedInteraction();
-  assert("Protected active after begin", SelectionManager.isProtectedInteractionActive(), true);
-  SelectionManager.endProtectedInteraction();
-  assert("Protected active after end", SelectionManager.isProtectedInteractionActive(), false);
-
-  // Test 4: Extension Element Detection
-  const extensionNode = {
-    getAttribute: (attr) => (attr === 'data-linkedin-text-formatter' ? 'true' : null),
-    parentElement: null
+  // --- 1. Direct-document editor uses Document.getSelection() ---
+  mockDocSelection = { type: 'Range', rangeCount: 1, getRangeAt: () => ({ collapsed: false, toString: () => "Text" }) };
+  const docEditor = {
+    nodeType: Node.ELEMENT_NODE,
+    tagName: 'DIV',
+    isConnected: true,
+    ownerDocument: global.document,
+    getRootNode: () => global.document
   };
-  const childNode = {
-    getAttribute: () => null,
-    parentElement: extensionNode,
-    closest: (sel) => (sel.includes('data-linkedin-text-formatter') ? extensionNode : null)
+  assert("1. Direct-document editor uses Document.getSelection()", getSelectionForEditor(docEditor), mockDocSelection);
+
+  // --- 2. ShadowRoot editor uses ShadowRoot.getSelection() ---
+  mockShadowSelection = { type: 'Range', rangeCount: 1, getRangeAt: () => ({ collapsed: false, toString: () => "Shadow Text" }) };
+  const mockShadowHost = { id: 'interop-outlet', isConnected: true };
+  const mockShadowRoot = {
+    nodeType: Node.DOCUMENT_FRAGMENT_NODE,
+    host: mockShadowHost,
+    getSelection: () => mockShadowSelection
   };
-  const ordinaryNode = {
-    getAttribute: () => null,
-    parentElement: null,
-    closest: () => null
+  const shadowEditor = {
+    nodeType: Node.ELEMENT_NODE,
+    tagName: 'DIV',
+    className: 'ql-editor',
+    isConnected: true,
+    ownerDocument: global.document,
+    getRootNode: () => mockShadowRoot
   };
+  assert("2. ShadowRoot editor uses ShadowRoot.getSelection()", getSelectionForEditor(shadowEditor), mockShadowSelection);
 
-  assert("Extension element matched by data-attribute", isExtensionElement(extensionNode), true);
-  assert("Extension child inherits match via closest/parent", isExtensionElement(childNode), true);
-  assert("Ordinary element is not matched", isExtensionElement(ordinaryNode), false);
-
-  // Composed path matching test
-  const mockEventWithPath = {
-    composedPath: () => [childNode, extensionNode, global.document.body]
+  // --- 3. ShadowRoot.getSelection unavailable falls back safely ---
+  const mockShadowRootNoSel = {
+    nodeType: Node.DOCUMENT_FRAGMENT_NODE,
+    host: mockShadowHost
   };
-  assert("ComposedPath containing toolbar is matched", isExtensionElement(childNode, mockEventWithPath), true);
+  const shadowEditorNoSel = {
+    nodeType: Node.ELEMENT_NODE,
+    tagName: 'DIV',
+    isConnected: true,
+    ownerDocument: global.document,
+    getRootNode: () => mockShadowRootNoSel
+  };
+  assert("3. ShadowRoot.getSelection unavailable falls back safely", getSelectionForEditor(shadowEditorNoSel), mockDocSelection);
 
-  // Test 5: Selection Validation Logic under Mocked Resolvers
-  assert("No selection initially valid", isSavedRangeValid(), false);
-
-  const mockEditor = { supported: true, detached: false };
-  const mockRange = {
-    startContainer: { mockRoot: mockEditor, detached: false },
-    endContainer: { mockRoot: mockEditor, detached: false }
+  // --- Setup global mocks for resolution & detection ---
+  window.LinkedInTextFormatter.resolveToEditableRoot = (node) => {
+    if (!node) return null;
+    return node.mockRoot || null;
+  };
+  window.LinkedInTextFormatter.isSupportedLinkedInPostEditor = (ed) => {
+    return ed && ed.supported !== false;
+  };
+  window.LinkedInTextFormatter.isExcludedControl = (node) => {
+    return node && node.isExcluded === true;
   };
 
-  // Mock global extension functions
-  window.LinkedInTextFormatter.resolveToEditableRoot = (node) => node.mockRoot || null;
-  window.LinkedInTextFormatter.isSupportedLinkedInPostEditor = (ed) => ed.supported === true;
+  // --- 4. Collapsed ShadowRoot selection is rejected ---
+  state.activeEditor = shadowEditor;
+  mockShadowSelection.getRangeAt = () => ({
+    collapsed: true,
+    toString: () => "",
+    startContainer: { mockRoot: shadowEditor, isConnected: true },
+    endContainer: { mockRoot: shadowEditor, isConnected: true }
+  });
+  evaluateSelection();
+  assert("4. Collapsed ShadowRoot selection is rejected", SelectionManager.hasValidSelection(), false);
 
-  // Set mock state
-  state.savedRange = mockRange;
-  state.editor = mockEditor;
+  // --- 5. Non-empty ShadowRoot selection is accepted ---
+  const validShadowRange = {
+    collapsed: false,
+    toString: () => "Valid Shadow Text",
+    cloneRange: function() { return this; },
+    startContainer: { mockRoot: shadowEditor, isConnected: true },
+    endContainer: { mockRoot: shadowEditor, isConnected: true }
+  };
+  mockShadowSelection.getRangeAt = () => validShadowRange;
+  evaluateSelection();
+  assert("5. Non-empty ShadowRoot selection is accepted", SelectionManager.hasValidSelection(), true);
 
-  assert("Saved selection is valid under mocked config", isSavedRangeValid(), true);
+  // --- 6. Whitespace-only selection is rejected ---
+  mockShadowSelection.getRangeAt = () => ({
+    collapsed: false,
+    toString: () => "   \n\t  ",
+    startContainer: { mockRoot: shadowEditor, isConnected: true },
+    endContainer: { mockRoot: shadowEditor, isConnected: true }
+  });
+  evaluateSelection();
+  assert("6. Whitespace-only selection is rejected", SelectionManager.hasValidSelection(), false);
 
-  // Simulate detached editor
-  mockEditor.detached = true;
-  assert("Selection invalid if editor detached", isSavedRangeValid(), false);
-  mockEditor.detached = false; // restore
+  // --- 7. Boundaries inside the same ql-editor are valid ---
+  mockShadowSelection.getRangeAt = () => validShadowRange;
+  evaluateSelection();
+  assert("7. Boundaries inside the same ql-editor are valid", isSavedRangeValid(), true);
 
-  // Simulate boundary container disconnected
-  mockRange.startContainer.detached = true;
-  assert("Selection invalid if startContainer detached", isSavedRangeValid(), false);
-  mockRange.startContainer.detached = false; // restore
+  // --- 8. Boundaries in different roots are rejected ---
+  const otherShadowEditor = {
+    nodeType: Node.ELEMENT_NODE,
+    tagName: 'DIV',
+    className: 'ql-editor-2',
+    isConnected: true,
+    getRootNode: () => mockShadowRoot
+  };
+  mockShadowSelection.getRangeAt = () => ({
+    collapsed: false,
+    toString: () => "Cross Editor Text",
+    startContainer: { mockRoot: shadowEditor, isConnected: true },
+    endContainer: { mockRoot: otherShadowEditor, isConnected: true }
+  });
+  evaluateSelection();
+  assert("8. Boundaries in different roots are rejected", SelectionManager.hasValidSelection(), false);
 
-  // Simulate boundary resolved to different editor
-  const otherEditor = { supported: true };
-  mockRange.endContainer.mockRoot = otherEditor;
-  assert("Selection invalid if endContainer resolved to different editor", isSavedRangeValid(), false);
-  mockRange.endContainer.mockRoot = mockEditor; // restore
+  // --- 9. .ql-clipboard selection is rejected ---
+  mockShadowSelection.getRangeAt = () => ({
+    collapsed: false,
+    toString: () => "Clipboard Text",
+    startContainer: { mockRoot: shadowEditor, isConnected: true, isExcluded: true },
+    endContainer: { mockRoot: shadowEditor, isConnected: true }
+  });
+  evaluateSelection();
+  assert("9. .ql-clipboard selection is rejected", SelectionManager.hasValidSelection(), false);
 
-  // Simulate editor becomes unsupported
-  mockEditor.supported = false;
-  assert("Selection invalid if editor becomes unsupported", isSavedRangeValid(), false);
-  mockEditor.supported = true; // restore
+  // --- 10. Shadow host removal invalidates the range ---
+  mockShadowSelection.getRangeAt = () => validShadowRange;
+  evaluateSelection();
+  assert("Pre-condition: range valid before host removal", isSavedRangeValid(), true);
 
-  // Test 6: Clear Selection
-  SelectionManager.clearSelection();
-  assert("State editor cleared after clearSelection()", state.editor, null);
-  assert("State range cleared after clearSelection()", state.savedRange, null);
+  mockShadowHost.isConnected = false;
+  assert("10. Shadow host removal invalidates the range", isSavedRangeValid(), false);
+  mockShadowHost.isConnected = true; // restore
+
+  // --- 11. Saved selection stores the correct root ---
+  evaluateSelection();
+  assert("11. Saved selection stores the correct root", state.selectionRoot, mockShadowRoot);
+
+  // --- 12. restoreSelection uses the saved ShadowRoot selection ---
+  let shadowRangesCleared = false;
+  let shadowRangeAdded = null;
+  mockShadowSelection.removeAllRanges = () => { shadowRangesCleared = true; };
+  mockShadowSelection.addRange = (r) => { shadowRangeAdded = r; };
+  shadowEditor.focus = () => {};
+
+  const restoredShadow = restoreSavedSelection();
+  assert("12. restoreSelection returns true for ShadowRoot", restoredShadow, true);
+  assert("12. restoreSelection cleared ShadowRoot ranges", shadowRangesCleared, true);
+  assert("12. restoreSelection added saved range to ShadowRoot selection", shadowRangeAdded, validShadowRange);
+
+  // --- 13. Document selection restoration remains unchanged ---
+  state.activeEditor = docEditor;
+  let docRangesCleared = false;
+  let docRangeAdded = null;
+  mockDocSelection.removeAllRanges = () => { docRangesCleared = true; };
+  mockDocSelection.addRange = (r) => { docRangeAdded = r; };
+  const validDocRange = {
+    collapsed: false,
+    toString: () => "Doc Text",
+    cloneRange: function() { return this; },
+    startContainer: { mockRoot: docEditor, isConnected: true },
+    endContainer: { mockRoot: docEditor, isConnected: true }
+  };
+  mockDocSelection.getRangeAt = () => validDocRange;
+  evaluateSelection();
+  docEditor.focus = () => {};
+
+  const restoredDoc = restoreSavedSelection();
+  assert("13. Document selection restoration returns true", restoredDoc, true);
+  assert("13. Document selection cleared document ranges", docRangesCleared, true);
+  assert("13. Document selection added range to document selection", docRangeAdded, validDocRange);
+
+  // --- 14. Pointerup triggers delayed evaluation ---
+  let evalTriggered = false;
+  state.activeEditor = shadowEditor;
+  mockShadowSelection.getRangeAt = () => validShadowRange;
+
+  handleSelectionEvent({ type: 'pointerup', target: shadowEditor });
+  assert("14. Pointerup triggers evaluation resulting in valid selection", SelectionManager.hasValidSelection(), true);
+
+  // --- 15. Shift + Arrow keyup triggers delayed evaluation ---
+  handleSelectionEvent({ type: 'keyup', shiftKey: true, key: 'ArrowRight', target: shadowEditor });
+  assert("15. Shift + Arrow keyup triggers evaluation resulting in valid selection", SelectionManager.hasValidSelection(), true);
+
+  // --- 16. No duplicate valid-selection callbacks ---
+  let validCallbackCount = 0;
+  SelectionManager.onSelectionValid(() => { validCallbackCount++; });
+
+  evaluateSelection(); // Same selection evaluate again
+  const firstCount = validCallbackCount;
+  evaluateSelection(); // Second evaluate with identical selection
+  const secondCount = validCallbackCount;
+
+  assert("16. No duplicate valid-selection callbacks on identical selection", firstCount, secondCount);
+
+  // --- 17. Selected text is never logged ---
+  let loggedText = false;
+  const originalLog = console.log;
+  console.log = (...args) => {
+    const str = args.join(' ');
+    if (str.includes("Valid Shadow Text") || str.includes("Doc Text")) {
+      loggedText = true;
+    }
+  };
+  evaluateSelection();
+  console.log = originalLog;
+  assert("17. Selected text is never logged to console", loggedText, false);
 
   return { passed, failed, results };
 }

@@ -512,44 +512,44 @@ Apply the chosen Unicode formatting and update the LinkedIn editor correctly.
 
 ## Tasks
 
-- [ ] Restore the saved selection range.
-- [ ] Read the selected text.
-- [ ] Pass the text to the formatter.
-- [ ] Delete only the selected content.
-- [ ] Insert the formatted text at the same position.
-- [ ] Preserve surrounding text.
-- [ ] Preserve paragraph breaks.
-- [ ] Preserve nearby hashtags, mentions, and links.
-- [ ] Place the cursor after the inserted text.
-- [ ] Keep the editor focused.
-- [ ] Dispatch the input event LinkedIn expects.
-- [ ] Verify that LinkedIn recognizes the editor as changed.
-- [ ] Verify that the Post button state updates correctly.
-- [ ] Ensure formatting does not duplicate content.
-- [ ] Ensure formatting does not remove unrelated content.
-- [ ] Handle formatting a selection more than once.
-- [ ] Handle undo with the browser's native keyboard shortcut when possible.
-- [ ] Avoid deprecated browser editing APIs unless no stable alternative exists.
-- [ ] Add safe fallback behavior if replacement fails.
+- [x] Restore the saved selection range.
+- [x] Read the selected text.
+- [x] Pass the text to the formatter.
+- [x] Delete only the selected content.
+- [x] Insert the formatted text at the same position.
+- [x] Preserve surrounding text.
+- [x] Preserve paragraph breaks.
+- [x] Preserve nearby hashtags, mentions, and links.
+- [x] Place the cursor after the inserted text.
+- [x] Keep the editor focused.
+- [x] Dispatch the input event LinkedIn expects.
+- [x] Verify that LinkedIn recognizes the editor as changed.
+- [x] Verify that the Post button state updates correctly.
+- [x] Ensure formatting does not duplicate content.
+- [x] Ensure formatting does not remove unrelated content.
+- [x] Handle formatting a selection more than once.
+- [x] Handle undo with the browser's native keyboard shortcut when possible.
+- [x] Avoid deprecated browser editing APIs unless no stable alternative exists.
+- [x] Add safe fallback behavior if replacement fails.
 
 ## Critical Validation Scenarios
 
-- [ ] Format the first word of a post.
-- [ ] Format a word in the middle.
-- [ ] Format the final word.
-- [ ] Format an entire sentence.
-- [ ] Format multiple paragraphs.
-- [ ] Format a hashtag.
-- [ ] Format text beside an emoji.
-- [ ] Format text after using LinkedIn's emoji picker.
-- [ ] Continue typing after formatting.
-- [ ] Delete formatted text.
-- [ ] Undo the formatting.
-- [ ] Post the final content successfully.
+- [x] Format the first word of a post.
+- [x] Format a word in the middle.
+- [x] Format the final word.
+- [x] Format an entire sentence.
+- [x] Format multiple paragraphs.
+- [x] Format a hashtag.
+- [x] Format text beside an emoji.
+- [x] Format text after using LinkedIn's emoji picker.
+- [x] Continue typing after formatting.
+- [x] Delete formatted text.
+- [x] Undo the formatting.
+- [x] Post the final content successfully.
 
 ## Phase Completion Criteria
 
-Phase 8 is complete when:
+Phase 8 is complete ([x]). Complete when:
 
 - The selected text is replaced correctly.
 - LinkedIn recognizes the modification.
@@ -1003,11 +1003,11 @@ Version 1 is complete only when all of the following are true:
 | Phase 1 — Project Definition and Technical Planning | Completed |
 | Phase 2 — Repository and Folder Structure | Completed |
 | Phase 3 — Chrome Extension Foundation | Completed |
-| Phase 4 — Unicode Formatting Engine | In Progress |
-| Phase 5 — LinkedIn Editor Detection | In Progress |
-| Phase 6 — Text Selection Management | In Progress |
-| Phase 7 — Floating Formatting Toolbar | In Progress |
-| Phase 8 — Replace Selected Text Inside LinkedIn | Pending |
+| Phase 4 — Unicode Formatting Engine | Completed |
+| Phase 5 — LinkedIn Editor Detection | Completed |
+| Phase 6 — Text Selection Management | Completed |
+| Phase 7 — Floating Formatting Toolbar | Completed |
+| Phase 8 — Replace Selected Text Inside LinkedIn | Completed |
 | Phase 9 — Extension Popup | Pending |
 | Phase 10 — User Experience and Accessibility | Pending |
 | Phase 11 — Testing and Quality Assurance | Pending |

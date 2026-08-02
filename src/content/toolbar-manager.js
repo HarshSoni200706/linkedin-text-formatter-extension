@@ -2,7 +2,8 @@
  * toolbar-manager.js
  *
  * Manages the floating formatting toolbar DOM element.
- * Responsible for creating, positioning, displaying, and hiding the toolbar near the user's text selection.
+ * Responsible for creating, positioning, displaying, and hiding the toolbar near the user's text selection,
+ * maintaining a single canonical toolbar instance across direct-document and open Shadow DOM layouts.
  */
 
 (function() {
@@ -57,21 +58,172 @@
 
   let toolbarElement = null;
   let isInitialized = false;
+  let pendingShowFrame = null;
   let rAFScrollId = null;
+  let selectionSubscriptionCount = 0;
   const formatActionCallbacks = [];
+
+  const TOOLBAR_CSS_TEXT = `
+.ltf-toolbar {
+  position: fixed;
+  z-index: 2147483647;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px;
+  background-color: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08);
+  font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 0.12s ease-in-out;
+}
+.ltf-toolbar--hidden {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  display: none !important;
+}
+.ltf-toolbar__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
+  margin: 0;
+  border: none;
+  background: transparent;
+  border-radius: 5px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #333333;
+  cursor: pointer;
+  outline: none;
+  transition: background-color 0.1s ease, color 0.1s ease;
+}
+.ltf-toolbar__button:hover {
+  background-color: rgba(0, 0, 0, 0.07);
+  color: #000000;
+}
+.ltf-toolbar__button:focus-visible {
+  outline: 2px solid #0a66c2;
+  outline-offset: 1px;
+  background-color: rgba(10, 102, 194, 0.08);
+}
+.ltf-toolbar__button:active {
+  background-color: rgba(0, 0, 0, 0.14);
+  transform: translateY(1px);
+}
+.ltf-toolbar__button--bold { font-weight: 700; }
+.ltf-toolbar__button--italic { font-style: italic; }
+.ltf-toolbar__button--bold-italic { font-weight: 700; font-style: italic; }
+.ltf-toolbar__button--underline { text-decoration: underline; }
+.ltf-toolbar__button--double-underline { text-decoration: underline double; }
+@media (prefers-color-scheme: dark) {
+  .ltf-toolbar {
+    background-color: #1d2226;
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+  .ltf-toolbar__button { color: #e9e9e9; }
+  .ltf-toolbar__button:hover { background-color: rgba(255, 255, 255, 0.12); color: #ffffff; }
+  .ltf-toolbar__button:focus-visible { outline-color: #70b5f9; background-color: rgba(112, 181, 249, 0.15); }
+  .ltf-toolbar__button:active { background-color: rgba(255, 255, 255, 0.2); }
+}
+`;
+
+  /**
+   * Ensures that extension toolbar CSS rules exist inside an open ShadowRoot host.
+   */
+  function ensureShadowToolbarStyles(shadowRoot) {
+    if (!shadowRoot || typeof shadowRoot.querySelector !== 'function') return;
+    let existingStyle = shadowRoot.querySelector('style[data-linkedin-text-formatter-style="true"]');
+    if (!existingStyle) {
+      const doc = shadowRoot.ownerDocument || document;
+      const styleEl = doc.createElement('style');
+      styleEl.setAttribute('data-linkedin-text-formatter-style', 'true');
+      styleEl.textContent = TOOLBAR_CSS_TEXT;
+      shadowRoot.appendChild(styleEl);
+      console.log('[LinkedIn Text Formatter] Shadow toolbar stylesheet inserted or reused.');
+    }
+  }
 
   /**
    * Resolves the host element for the toolbar.
-   * Prefers the active composer dialog containing the editor, with fallback to document.body.
+   * Prefers open ShadowRoot if editor is inside one, then composer dialog, with fallback to document.body.
    */
   function resolveToolbarHost(editor) {
-    if (editor && typeof editor.closest === 'function') {
-      const activeDialog = editor.closest('dialog[open]') || editor.closest('[role="dialog"]');
-      if (activeDialog) {
-        return activeDialog;
+    if (editor) {
+      const rootNode = editor.getRootNode ? editor.getRootNode() : null;
+      if (rootNode && rootNode.nodeType === 11 /* DOCUMENT_FRAGMENT_NODE / ShadowRoot */ && rootNode.host) {
+        console.log('[LinkedIn Text Formatter] Toolbar host selected: shadow-root');
+        ensureShadowToolbarStyles(rootNode);
+        return rootNode;
+      }
+
+      if (typeof editor.closest === 'function') {
+        const activeDialog = editor.closest('dialog[open]') || editor.closest('[role="dialog"]');
+        if (activeDialog) {
+          console.log('[LinkedIn Text Formatter] Toolbar host selected: dialog');
+          return activeDialog;
+        }
       }
     }
-    return document.body;
+
+    const doc = (editor && editor.ownerDocument) ? editor.ownerDocument : document;
+    console.log('[LinkedIn Text Formatter] Toolbar host selected: document');
+    return doc.body || doc.documentElement || document.body;
+  }
+
+  /**
+   * Safely removes duplicate extension toolbar elements matching the exact marker.
+   */
+  function cleanupDuplicateToolbars(targetHost, canonicalEl) {
+    const selector = '#ltf-floating-toolbar[data-linkedin-text-formatter="true"]';
+    const foundElements = [];
+
+    // Query target host
+    if (targetHost && typeof targetHost.querySelectorAll === 'function') {
+      try {
+        const inHost = targetHost.querySelectorAll(selector);
+        inHost.forEach(el => foundElements.push(el));
+      } catch (e) {}
+    }
+
+    // Query main document
+    if (typeof document !== 'undefined' && typeof document.querySelectorAll === 'function') {
+      try {
+        const inDoc = document.querySelectorAll(selector);
+        inDoc.forEach(el => {
+          if (!foundElements.includes(el)) {
+            foundElements.push(el);
+          }
+        });
+      } catch (e) {}
+    }
+
+    const countInRoot = foundElements.length;
+    console.log(`[LinkedIn Text Formatter] Number of toolbar elements found in active root: ${countInRoot}`);
+
+    let removeCount = 0;
+    foundElements.forEach(el => {
+      if (el !== canonicalEl) {
+        if (el.parentNode) {
+          el.parentNode.removeChild(el);
+          removeCount++;
+        }
+      }
+    });
+
+    if (removeCount > 0) {
+      console.log(`[LinkedIn Text Formatter] Duplicate toolbar removed (removed ${removeCount}).`);
+    }
   }
 
   /**
@@ -174,24 +326,51 @@
   }
 
   /**
-   * Creates the single toolbar DOM element if it doesn't already exist, or reuses it.
-   * Ensures the toolbar is attached inside the saved editor's active dialog.
+   * Creates or reuses the single canonical toolbar DOM element.
    */
   function createToolbarElement(editor) {
     const targetHost = resolveToolbarHost(editor);
-    const existing = document.getElementById('ltf-floating-toolbar');
+
+    // 1. If canonical in-memory toolbarElement reference exists and is connected
+    if (toolbarElement) {
+      const isConn = typeof toolbarElement.isConnected === 'boolean' ? toolbarElement.isConnected : (toolbarElement.ownerDocument && toolbarElement.ownerDocument.body.contains(toolbarElement));
+      if (isConn || toolbarElement.parentNode) {
+        if (toolbarElement.parentElement !== targetHost) {
+          targetHost.appendChild(toolbarElement);
+          console.log('[LinkedIn Text Formatter] Canonical toolbar reparented.');
+        } else {
+          console.log('[LinkedIn Text Formatter] Canonical toolbar reused.');
+        }
+        cleanupDuplicateToolbars(targetHost, toolbarElement);
+        return toolbarElement;
+      }
+    }
+
+    // 2. Root-aware fallback lookup
+    let existing = null;
+    if (targetHost && typeof targetHost.querySelector === 'function') {
+      existing = targetHost.querySelector('#ltf-floating-toolbar[data-linkedin-text-formatter="true"]');
+    }
+    if (!existing && typeof document !== 'undefined' && typeof document.querySelector === 'function') {
+      existing = document.querySelector('#ltf-floating-toolbar[data-linkedin-text-formatter="true"]');
+    }
 
     if (existing) {
-      if (existing.parentElement !== targetHost) {
-        targetHost.appendChild(existing);
-      }
       toolbarElement = existing;
-      console.log('[LinkedIn Text Formatter] Toolbar element reused.');
+      if (toolbarElement.parentElement !== targetHost) {
+        targetHost.appendChild(toolbarElement);
+        console.log('[LinkedIn Text Formatter] Canonical toolbar reparented.');
+      } else {
+        console.log('[LinkedIn Text Formatter] Canonical toolbar reused.');
+      }
+      cleanupDuplicateToolbars(targetHost, toolbarElement);
       return toolbarElement;
     }
 
-    console.log('[LinkedIn Text Formatter] Toolbar element created.');
-    const toolbar = document.createElement('div');
+    // 3. Create new canonical toolbar element
+    console.log('[LinkedIn Text Formatter] Canonical toolbar created.');
+    const doc = (targetHost && targetHost.ownerDocument) ? targetHost.ownerDocument : document;
+    const toolbar = doc.createElement('div');
     toolbar.id = 'ltf-floating-toolbar';
     toolbar.className = 'ltf-toolbar ltf-toolbar--hidden';
     toolbar.style.display = 'none';
@@ -202,7 +381,7 @@
 
     // Register capture phase listeners on toolbar container
     toolbar.addEventListener('pointerdown', () => {
-      console.log('[LinkedIn Text Formatter] pointerdown received');
+      console.log('[LinkedIn Text Formatter] Toolbar button pointerdown received');
       const SelectionManager = window.LinkedInTextFormatter.SelectionManager;
       if (SelectionManager && typeof SelectionManager.beginProtectedInteraction === 'function') {
         SelectionManager.beginProtectedInteraction();
@@ -223,8 +402,21 @@
       console.log('[LinkedIn Text Formatter] mouseup received');
     }, { capture: true });
 
+    toolbar.addEventListener('click', (e) => {
+      console.log('[LinkedIn Text Formatter] Toolbar button click received');
+      const target = e.target;
+      const btn = target ? (typeof target.closest === 'function' ? target.closest('[data-action]') : null) : null;
+      if (btn) {
+        const actionStyle = btn.getAttribute('data-action');
+        console.log(`[LinkedIn Text Formatter] Button action resolved: ${actionStyle}`);
+        if (actionStyle) {
+          handleButtonClick(actionStyle);
+        }
+      }
+    }, { capture: true });
+
     BUTTON_CONFIGS.forEach((config) => {
-      const btn = document.createElement('button');
+      const btn = doc.createElement('button');
       btn.type = 'button';
       btn.className = `ltf-toolbar__button ${config.className}`;
       btn.setAttribute('data-action', config.action);
@@ -247,12 +439,8 @@
           if (SelectionManager && typeof SelectionManager.beginProtectedInteraction === 'function') {
             SelectionManager.beginProtectedInteraction();
           }
+          handleButtonClick(config.action);
         }
-      });
-
-      btn.addEventListener('click', (e) => {
-        console.log('[LinkedIn Text Formatter] click received');
-        handleButtonClick(config.action);
       });
 
       toolbar.appendChild(btn);
@@ -260,6 +448,7 @@
 
     targetHost.appendChild(toolbar);
     toolbarElement = toolbar;
+    cleanupDuplicateToolbars(targetHost, toolbarElement);
     return toolbarElement;
   }
 
@@ -280,7 +469,8 @@
     }
 
     console.log(`[LinkedIn Text Formatter] Toolbar action requested: ${actionStyle}`);
-    console.log('[LinkedIn Text Formatter] formatting action emitted');
+    console.log(`[LinkedIn Text Formatter] Number of registered action callbacks: ${formatActionCallbacks.length}`);
+    console.log('[LinkedIn Text Formatter] Format action emitted');
 
     formatActionCallbacks.forEach((cb) => {
       try {
@@ -302,6 +492,10 @@
    * Hides the toolbar with diagnostic reason logging.
    */
   function hide(reason = 'manual') {
+    if (pendingShowFrame) {
+      cancelAnimationFrame(pendingShowFrame);
+      pendingShowFrame = null;
+    }
     console.log(`[LinkedIn Text Formatter] Toolbar hidden. Reason: ${reason}`);
     if (toolbarElement) {
       toolbarElement.classList.add('ltf-toolbar--hidden');
@@ -318,12 +512,20 @@
    */
   function isHidden() {
     if (!toolbarElement) return true;
-    return (
-      toolbarElement.classList.contains('ltf-toolbar--hidden') ||
-      toolbarElement.style.display === 'none' ||
-      toolbarElement.style.visibility === 'hidden' ||
-      !document.body.contains(toolbarElement)
-    );
+    if (toolbarElement.classList.contains('ltf-toolbar--hidden') ||
+        toolbarElement.style.display === 'none' ||
+        toolbarElement.style.visibility === 'hidden') {
+      return true;
+    }
+    if (typeof toolbarElement.isConnected === 'boolean') {
+      return !toolbarElement.isConnected;
+    }
+    const root = toolbarElement.getRootNode ? toolbarElement.getRootNode() : null;
+    if (root && root.nodeType === 11 /* ShadowRoot */ && root.host) {
+      return root.host.isConnected === false;
+    }
+    const doc = toolbarElement.ownerDocument || document;
+    return doc.body && !doc.body.contains(toolbarElement);
   }
 
   /**
@@ -354,7 +556,7 @@
     }
     console.log('[LinkedIn Text Formatter] Saved range validation passed.');
 
-    // Step 1: Ensure element exists & attached inside active composer dialog
+    // Step 1: Ensure element exists & attached inside active composer host
     createToolbarElement(editor);
 
     // Step 2: Put into measurable but temporarily non-visible state
@@ -403,23 +605,6 @@
     toolbarElement.setAttribute('aria-hidden', 'false');
 
     console.log('[LinkedIn Text Formatter] Toolbar visible state applied successfully.');
-
-    // Step 8: Concise temporary state diagnostic
-    try {
-      const parent = toolbarElement.parentElement;
-      const parentTag = parent ? parent.tagName : 'NULL';
-      const isDialogParent = parent && (parent.tagName === 'DIALOG' || parent.getAttribute('role') === 'dialog');
-      const rect = toolbarElement.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      const hitElement = document.elementFromPoint ? document.elementFromPoint(centerX, centerY) : null;
-      const hitTag = hitElement ? hitElement.tagName : 'NULL';
-
-      console.log(`[LinkedIn Text Formatter] State Diagnostic: parent=${parentTag} (isDialog=${isDialogParent}), hidden=${toolbarElement.hidden}, aria-hidden=${toolbarElement.getAttribute('aria-hidden')}, display=${toolbarElement.style.display}, visibility=${toolbarElement.style.visibility}, opacity=${toolbarElement.style.opacity}, pointer-events=${toolbarElement.style.pointerEvents}, z-index=${window.getComputedStyle ? window.getComputedStyle(toolbarElement).zIndex : 'N/A'}, rect=${rect.width}x${rect.height} at (${rect.left}, ${pos.top}), hitElement=${hitTag}`);
-    } catch (diagErr) {
-      console.error('[LinkedIn Text Formatter] Diagnostic logging error:', diagErr);
-    }
-
     return true;
   }
 
@@ -433,20 +618,28 @@
 
   /**
    * Displays the toolbar near the supplied or saved selection range.
+   * Coalesces rapid updates into a single animation frame.
    */
   function show(suppliedRange) {
-    console.log('[LinkedIn Text Formatter] show() requested.');
-    const SelectionManager = window.LinkedInTextFormatter.SelectionManager;
-    const range = suppliedRange || (SelectionManager && typeof SelectionManager.getSavedRange === 'function' ? SelectionManager.getSavedRange() : null);
-
-    if (!range) {
-      console.log('[LinkedIn Text Formatter] show() failed: No valid range retrieved.');
-      hide('no-range-on-show');
-      return;
+    if (pendingShowFrame) {
+      cancelAnimationFrame(pendingShowFrame);
+      console.log('[LinkedIn Text Formatter] Selection update coalesced.');
     }
-    console.log('[LinkedIn Text Formatter] Saved range retrieved.');
+    pendingShowFrame = requestAnimationFrame(() => {
+      pendingShowFrame = null;
+      console.log('[LinkedIn Text Formatter] show() requested.');
+      const SelectionManager = window.LinkedInTextFormatter.SelectionManager;
+      const range = suppliedRange || (SelectionManager && typeof SelectionManager.getSavedRange === 'function' ? SelectionManager.getSavedRange() : null);
 
-    positionToolbar(range);
+      if (!range) {
+        console.log('[LinkedIn Text Formatter] show() failed: No valid range retrieved.');
+        hide('no-range-on-show');
+        return;
+      }
+      console.log('[LinkedIn Text Formatter] Saved range retrieved.');
+
+      positionToolbar(range);
+    });
   }
 
   /**
@@ -495,7 +688,7 @@
     // Create single element instance inside active dialog if present
     createToolbarElement(editor);
 
-    // Subscribe to SelectionManager events if available
+    // Subscribe to SelectionManager events if available - strictly ONCE
     if (SelectionManager) {
       if (typeof SelectionManager.onSelectionValid === 'function') {
         SelectionManager.onSelectionValid(() => {
@@ -503,6 +696,7 @@
           const range = typeof SelectionManager.getSavedRange === 'function' ? SelectionManager.getSavedRange() : null;
           show(range);
         });
+        selectionSubscriptionCount++;
         console.log('[LinkedIn Text Formatter] Selection-valid callback registered.');
       }
 
@@ -531,7 +725,14 @@
    * Destroys the toolbar instance and removes listeners.
    */
   function destroy() {
-    if (rAFScrollId) cancelAnimationFrame(rAFScrollId);
+    if (pendingShowFrame) {
+      cancelAnimationFrame(pendingShowFrame);
+      pendingShowFrame = null;
+    }
+    if (rAFScrollId) {
+      cancelAnimationFrame(rAFScrollId);
+      rAFScrollId = null;
+    }
 
     window.removeEventListener('scroll', handleScrollOrResize, { capture: true });
     window.removeEventListener('resize', handleScrollOrResize);
@@ -542,6 +743,7 @@
 
     toolbarElement = null;
     isInitialized = false;
+    selectionSubscriptionCount = 0;
     formatActionCallbacks.length = 0;
   }
 
@@ -553,17 +755,22 @@
     reposition,
     isVisible,
     getElement: () => toolbarElement,
+    getSelectionSubscriptionCount: () => selectionSubscriptionCount,
     resolveToolbarHost,
     destroy,
-    onFormatAction
+    onFormatAction,
+    BUTTON_CONFIGS
   };
 
   // Export pure functions for testing context
   if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
     module.exports = {
+      ToolbarManager: window.LinkedInTextFormatter.ToolbarManager,
       calculateToolbarPosition,
       getValidSelectionRect,
       resolveToolbarHost,
+      ensureShadowToolbarStyles,
+      cleanupDuplicateToolbars,
       BUTTON_CONFIGS,
       formatActionCallbacks,
       initialize,
