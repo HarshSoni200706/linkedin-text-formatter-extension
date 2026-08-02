@@ -242,14 +242,56 @@ node tests/selection-manager.test.js
 
 ---
 
+## Floating Formatting Toolbar (Phase 7)
+
+The extension includes a floating toolbar implementation in `src/content/toolbar-manager.js` and styling in `src/styles/content-toolbar.css`.
+
+### When the Toolbar Appears
+* Appears automatically near a valid text selection made within LinkedIn's supported post creation editor.
+* Subscribes to `SelectionManager` events (`onSelectionValid` / `onSelectionInvalid`).
+* Hides immediately when the selection becomes invalid, collapsed, cleared, or when pressing `Escape`.
+
+### Five Available Actions
+1. **Bold** (`B`)
+2. **Italic** (`I`)
+3. **Bold Italic** (`BI`)
+4. **Underline** (`U`)
+5. **Double Underline** (`U` with double underline styling)
+
+> **Note:** During Phase 7, buttons emit action requests to subscribers via `onFormatAction`. Text replacement and formatting are executed in Phase 8. Buttons do NOT modify LinkedIn post content during Phase 7.
+
+### Accessibility Behavior
+* Built with native `<button type="button">` elements.
+* Supports full keyboard navigation (`Tab`, `Shift + Tab`, `Enter`, `Space`).
+* Features distinct focus rings (`:focus-visible`) and high-contrast styling for both light and dark page themes.
+* Pressing `Escape` hides the toolbar cleanly.
+
+### Selection-Protection Behavior
+* Implements `pointerdown` and `mousedown` handlers calling `SelectionManager.beginProtectedInteraction()`.
+* Toolbar clicks do not steal focus or cause `SelectionManager` to clear the saved range prematurely.
+
+### Positioning Strategy
+* Uses viewport-relative coordinates (`position: fixed`) derived from `Range.getBoundingClientRect()`.
+* Automatically prefers placing above the selection, falling back below the selection or clamping within viewport margins (`8px`) if space is constrained.
+* Repositions on window resize and scroll using `requestAnimationFrame`.
+
+### Running Toolbar Manager Tests
+To execute the zero-dependency ToolbarManager unit tests, run:
+```bash
+node tests/toolbar-manager.test.js
+```
+
+---
+
 ## Current Development Status
 
-* **Active Phase:** Phase 6 — Text Selection Management (Implementation completed, pending manual LinkedIn browser verification).
-* **Next Phase:** Phase 7 — Floating Formatting Toolbar.
+* **Active Phase:** Phase 7 — Floating Formatting Toolbar (Implementation completed, pending manual LinkedIn browser verification).
+* **Next Phase:** Phase 8 — Replace Selected Text Inside LinkedIn.
 
 ---
 
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
+
 

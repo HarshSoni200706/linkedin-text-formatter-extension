@@ -1,51 +1,48 @@
 /**
  * selection-manager.test.js
  *
- * Zero-dependency unit tests for validating SelectionManager's pure logic.
- * Updated to verify compatibility with the scored editor detection rules.
+ * Zero-dependency unit tests for SelectionManager:
+ * - Direction detection
+ * - State protection API
+ * - Extension element matching with composedPath and closest
+ * - Range validation under mock conditions
+ * - State clearing
  */
 
-// 1. Mock minimal DOM structures needed before importing SelectionManager
+// 1. Mock minimal DOM environment
 global.Node = {
-  ELEMENT_NODE: 1,
-  TEXT_NODE: 3,
   DOCUMENT_POSITION_PRECEDING: 2,
-  DOCUMENT_POSITION_FOLLOWING: 4
+  DOCUMENT_POSITION_FOLLOWING: 4,
+  ELEMENT_NODE: 1,
+  TEXT_NODE: 3
 };
 
 global.document = {
   addEventListener: () => {},
+  removeEventListener: () => {},
   body: {
     contains: (node) => {
-      // Mock body.contains to return true for nodes created in our tests
-      return node && !node.detached;
+      if (!node) return false;
+      return node.detached !== true;
     }
   }
 };
 
+let mockSelection = null;
 global.window = {
-  LinkedInTextFormatter: {
-    resolveToEditableRoot: (node) => {
-      if (!node) return null;
-      return node.mockRoot || null;
-    },
-    isSupportedLinkedInPostEditor: (element) => {
-      return element && element.supported;
-    }
-  },
-  getSelection: () => {}
+  getSelection: () => mockSelection,
+  LinkedInTextFormatter: {}
 };
 
-// Import selection-manager (executes IIFE and attaches to window.LinkedInTextFormatter)
+// Import selection-manager
 require('../src/content/selection-manager');
 
-// Retrieve selection-manager exports from mock Node env
 const {
+  state,
   getSelectionDirection,
   isSavedRangeValid,
   clearSavedSelection,
-  isExtensionElement,
-  state
+  isExtensionElement
 } = require('../src/content/selection-manager');
 
 const SelectionManager = global.window.LinkedInTextFormatter.SelectionManager;
@@ -76,77 +73,73 @@ function runSelectionManagerTests() {
   assert("API: endProtectedInteraction is a function", typeof SelectionManager.endProtectedInteraction, "function");
   assert("API: isProtectedInteractionActive is a function", typeof SelectionManager.isProtectedInteractionActive, "function");
 
-  // Test 2: RTL/LTR Direction Detection
-  const mockNodeA = { id: 'nodeA', compareDocumentPosition: () => 4 }; // nodeB is after A
-  const mockNodeB = { id: 'nodeB', compareDocumentPosition: () => 2 }; // nodeA is before B
+  // Test 2: Direction Detection
+  const sameNode = { id: 'text-1' };
+  const sel1 = { anchorNode: sameNode, focusNode: sameNode, anchorOffset: 0, focusOffset: 5 };
+  const sel2 = { anchorNode: sameNode, focusNode: sameNode, anchorOffset: 5, focusOffset: 0 };
+  assert("Direction: Same node forward", getSelectionDirection(sel1), 'forward');
+  assert("Direction: Same node backward", getSelectionDirection(sel2), 'backward');
 
-  // Same node, focusOffset >= anchorOffset => forward
-  const sel1 = { anchorNode: mockNodeA, anchorOffset: 5, focusNode: mockNodeA, focusOffset: 8 };
-  assert("Direction: Same node forward", getSelectionDirection(sel1), "forward");
+  const nodeA = { compareDocumentPosition: (other) => (other === nodeB ? Node.DOCUMENT_POSITION_FOLLOWING : 0) };
+  const nodeB = { compareDocumentPosition: (other) => (other === nodeA ? Node.DOCUMENT_POSITION_PRECEDING : 0) };
+  const sel3 = { anchorNode: nodeA, focusNode: nodeB };
+  const sel4 = { anchorNode: nodeB, focusNode: nodeA };
+  assert("Direction: Different nodes forward", getSelectionDirection(sel3), 'forward');
+  assert("Direction: Different nodes backward", getSelectionDirection(sel4), 'backward');
 
-  // Same node, focusOffset < anchorOffset => backward
-  const sel2 = { anchorNode: mockNodeA, anchorOffset: 5, focusNode: mockNodeA, focusOffset: 2 };
-  assert("Direction: Same node backward", getSelectionDirection(sel2), "backward");
-
-  // Different nodes, focus Node follows anchor Node => forward
-  const sel3 = {
-    anchorNode: mockNodeA,
-    focusNode: mockNodeB,
-    anchorOffset: 0,
-    focusOffset: 0
-  };
-  mockNodeA.compareDocumentPosition = (other) => other === mockNodeB ? Node.DOCUMENT_POSITION_FOLLOWING : 0;
-  assert("Direction: Different nodes forward", getSelectionDirection(sel3), "forward");
-
-  // Different nodes, focus Node precedes anchor Node => backward
-  const sel4 = {
-    anchorNode: mockNodeB,
-    focusNode: mockNodeA,
-    anchorOffset: 0,
-    focusOffset: 0
-  };
-  mockNodeB.compareDocumentPosition = (other) => other === mockNodeA ? Node.DOCUMENT_POSITION_PRECEDING : 0;
-  assert("Direction: Different nodes backward", getSelectionDirection(sel4), "backward");
-
-  // Test 3: Protected Interaction State
+  // Test 3: Protection State Locking
   assert("Protected active initially false", SelectionManager.isProtectedInteractionActive(), false);
   SelectionManager.beginProtectedInteraction();
   assert("Protected active after begin", SelectionManager.isProtectedInteractionActive(), true);
   SelectionManager.endProtectedInteraction();
   assert("Protected active after end", SelectionManager.isProtectedInteractionActive(), false);
 
-  // Test 4: Extension element identification
-  const toolbarEl = {
-    getAttribute: (attr) => attr === 'data-linkedin-text-formatter' ? 'true' : null,
+  // Test 4: Extension Element Detection
+  const extensionNode = {
+    getAttribute: (attr) => (attr === 'data-linkedin-text-formatter' ? 'true' : null),
     parentElement: null
   };
-  const toolbarChild = {
-    parentElement: toolbarEl
-  };
-  const ordinaryEl = {
+  const childNode = {
     getAttribute: () => null,
-    parentElement: null
+    parentElement: extensionNode,
+    closest: (sel) => (sel.includes('data-linkedin-text-formatter') ? extensionNode : null)
   };
-  assert("Extension element matched by data-attribute", isExtensionElement(toolbarEl), true);
-  assert("Extension child inherits match", isExtensionElement(toolbarChild), true);
-  assert("Ordinary element is not matched", isExtensionElement(ordinaryEl), false);
+  const ordinaryNode = {
+    getAttribute: () => null,
+    parentElement: null,
+    closest: () => null
+  };
 
-  // Test 5: Range validation (isSavedRangeValid)
-  SelectionManager.clearSelection();
-  assert("No selection initially valid", SelectionManager.hasValidSelection(), false);
+  assert("Extension element matched by data-attribute", isExtensionElement(extensionNode), true);
+  assert("Extension child inherits match via closest/parent", isExtensionElement(childNode), true);
+  assert("Ordinary element is not matched", isExtensionElement(ordinaryNode), false);
 
-  // Set mock state directly
-  const mockEditor = { supported: true, name: 'Editor' };
+  // Composed path matching test
+  const mockEventWithPath = {
+    composedPath: () => [childNode, extensionNode, global.document.body]
+  };
+  assert("ComposedPath containing toolbar is matched", isExtensionElement(childNode, mockEventWithPath), true);
+
+  // Test 5: Selection Validation Logic under Mocked Resolvers
+  assert("No selection initially valid", isSavedRangeValid(), false);
+
+  const mockEditor = { supported: true, detached: false };
   const mockRange = {
-    startContainer: { mockRoot: mockEditor },
-    endContainer: { mockRoot: mockEditor }
+    startContainer: { mockRoot: mockEditor, detached: false },
+    endContainer: { mockRoot: mockEditor, detached: false }
   };
+
+  // Mock global extension functions
+  window.LinkedInTextFormatter.resolveToEditableRoot = (node) => node.mockRoot || null;
+  window.LinkedInTextFormatter.isSupportedLinkedInPostEditor = (ed) => ed.supported === true;
+
+  // Set mock state
   state.savedRange = mockRange;
   state.editor = mockEditor;
 
   assert("Saved selection is valid under mocked config", isSavedRangeValid(), true);
 
-  // Simulate editor disconnected
+  // Simulate detached editor
   mockEditor.detached = true;
   assert("Selection invalid if editor detached", isSavedRangeValid(), false);
   mockEditor.detached = false; // restore

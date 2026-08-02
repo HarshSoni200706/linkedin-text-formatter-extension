@@ -445,53 +445,53 @@ Create a small toolbar that appears near selected text and provides the five for
 
 ### Toolbar Structure
 
-- [ ] Create the toolbar element through JavaScript.
-- [ ] Ensure only one toolbar instance exists.
-- [ ] Add five buttons:
-  - [ ] Bold
-  - [ ] Italic
-  - [ ] Bold Italic
-  - [ ] Underline
-  - [ ] Double Underline
-- [ ] Add accessible labels to every button.
-- [ ] Add tooltips.
-- [ ] Make buttons keyboard accessible.
-- [ ] Use semantic button elements.
-- [ ] Prevent toolbar clicks from immediately destroying the selection.
+- [x] Create the toolbar element through JavaScript.
+- [x] Ensure only one toolbar instance exists.
+- [x] Add five buttons:
+  - [x] Bold
+  - [x] Italic
+  - [x] Bold Italic
+  - [x] Underline
+  - [x] Double Underline
+- [x] Add accessible labels to every button.
+- [x] Add tooltips.
+- [x] Make buttons keyboard accessible.
+- [x] Use semantic button elements.
+- [x] Prevent toolbar clicks from immediately destroying the selection.
 
 ### Toolbar Appearance
 
-- [ ] Create a clean and minimal design.
-- [ ] Use a neutral style that fits LinkedIn.
-- [ ] Add visible hover states.
-- [ ] Add visible focus states.
-- [ ] Add pressed or active feedback.
-- [ ] Add a subtle shadow and border.
-- [ ] Ensure sufficient color contrast.
-- [ ] Ensure the toolbar does not cover selected text unnecessarily.
-- [ ] Avoid copying LinkedIn branding too closely.
-- [ ] Make the toolbar compact.
+- [x] Create a clean and minimal design.
+- [x] Use a neutral style that fits LinkedIn.
+- [x] Add visible hover states.
+- [x] Add visible focus states.
+- [x] Add pressed or active feedback.
+- [x] Add a subtle shadow and border.
+- [x] Ensure sufficient color contrast.
+- [x] Ensure the toolbar does not cover selected text unnecessarily.
+- [x] Avoid copying LinkedIn branding too closely.
+- [x] Make the toolbar compact.
 
 ### Toolbar Positioning
 
-- [ ] Position the toolbar using the selection range bounding rectangle.
-- [ ] Prefer placement above the selected text.
-- [ ] Place below the selection if there is insufficient space above.
-- [ ] Keep the toolbar inside the visible viewport.
-- [ ] Reposition on scroll.
-- [ ] Reposition on window resize.
-- [ ] Handle selections spanning multiple lines.
-- [ ] Hide the toolbar when the editor is no longer visible.
+- [x] Position the toolbar using the selection range bounding rectangle.
+- [x] Prefer placement above the selected text.
+- [x] Place below the selection if there is insufficient space above.
+- [x] Keep the toolbar inside the visible viewport.
+- [x] Reposition on scroll.
+- [x] Reposition on window resize.
+- [x] Handle selections spanning multiple lines.
+- [x] Hide the toolbar when the editor is no longer visible.
 
 ### Toolbar Lifecycle
 
-- [ ] Show only when valid text is selected.
+- [x] Show only when valid text is selected.
 - [ ] Hide after formatting.
-- [ ] Hide when clicking outside.
-- [ ] Hide when pressing Escape.
-- [ ] Hide when the selection is cleared.
-- [ ] Hide when the LinkedIn post modal closes.
-- [ ] Prevent duplicate toolbars after route changes.
+- [x] Hide when clicking outside.
+- [x] Hide when pressing Escape.
+- [x] Hide when the selection is cleared.
+- [x] Hide when the LinkedIn post modal closes.
+- [x] Prevent duplicate toolbars after route changes.
 
 ## Phase Completion Criteria
 
@@ -1006,7 +1006,7 @@ Version 1 is complete only when all of the following are true:
 | Phase 4 — Unicode Formatting Engine | In Progress |
 | Phase 5 — LinkedIn Editor Detection | In Progress |
 | Phase 6 — Text Selection Management | In Progress |
-| Phase 7 — Floating Formatting Toolbar | Pending |
+| Phase 7 — Floating Formatting Toolbar | In Progress |
 | Phase 8 — Replace Selected Text Inside LinkedIn | Pending |
 | Phase 9 — Extension Popup | Pending |
 | Phase 10 — User Experience and Accessibility | Pending |

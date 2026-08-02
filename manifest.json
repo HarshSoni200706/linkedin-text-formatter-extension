@@ -24,8 +24,10 @@
         "https://www.linkedin.com/*"
       ],
       "js": [
+        "src/shared/constants.js",
         "src/content/editor-manager.js",
         "src/content/selection-manager.js",
+        "src/content/toolbar-manager.js",
         "src/content/content-script.js"
       ],
       "css": [

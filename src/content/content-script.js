@@ -19,6 +19,10 @@
   if (window.LinkedInTextFormatter.SelectionManager) {
     console.log('[LinkedIn Text Formatter] Selection manager initialized.');
   }
+  if (window.LinkedInTextFormatter.ToolbarManager) {
+    window.LinkedInTextFormatter.ToolbarManager.initialize();
+    console.log('[LinkedIn Text Formatter] Toolbar manager initialized.');
+  }
 
   // Keep track of the last checked editor element
   let lastCheckedElement = null;
