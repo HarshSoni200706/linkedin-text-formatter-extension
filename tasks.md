@@ -566,19 +566,22 @@ Provide a simple extension popup that explains the extension and gives the user 
 
 ## Tasks
 
-- [ ] Create the popup layout.
-- [ ] Display the extension name.
-- [ ] Display a short explanation of how to use it.
-- [ ] Show the five supported formatting styles.
-- [ ] Add an enable/disable toggle only if required.
-- [ ] Store the toggle state using Chrome Storage.
-- [ ] Make the content script respect the saved toggle state.
-- [ ] Add a short accessibility warning.
-- [ ] Add the current extension version.
-- [ ] Add a link to the GitHub repository.
-- [ ] Add a privacy statement indicating that text is processed locally.
-- [ ] Keep the popup visually consistent with the floating toolbar.
-- [ ] Ensure the popup works without internet access.
+- [x] Create the popup layout.
+- [x] Display the extension name.
+- [x] Display a short explanation of how to use it.
+- [x] Show the five supported formatting styles.
+- [ ] Add an enable/disable toggle only if required — Not required for Version 1 — intentionally omitted
+- [ ] Store the toggle state using Chrome Storage — Not required for Version 1 — intentionally omitted
+- [ ] Make the content script respect the saved toggle state — Not required for Version 1 — intentionally omitted
+- [x] Add a short accessibility warning.
+- [x] Add the current extension version.
+- [x] Add a link to the GitHub repository.
+- [x] Add a privacy statement indicating that text is processed locally.
+- [x] Keep the popup visually consistent with the floating toolbar.
+- [x] Ensure the popup works without internet access.
+
+### Note on Version 1 Product Decision
+An enable/disable toggle and Chrome Storage state management are not required for Version 1 because the floating toolbar is strictly scoped to valid text selections inside supported LinkedIn post editors and does not run on external sites. Omitting the toggle keeps extension permissions to the absolute minimum (no `storage` permission requested).
 
 ## Recommended Popup Message
 
@@ -595,11 +598,12 @@ The popup should clearly explain:
 
 ## Phase Completion Criteria
 
-Phase 9 is complete when:
+Phase 9 status: **In Progress** ([~]). Complete when:
 
 - The popup is clear and functional.
 - Users can understand the workflow without external documentation.
-- Any saved setting persists between browser sessions.
+- Manual browser verification confirms popup UI, dark mode, keyboard accessibility, and offline loading.
+
 
 ---
 
