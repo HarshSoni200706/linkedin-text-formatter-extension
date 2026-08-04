@@ -1,65 +1,288 @@
-/* Popup Interface Styles */
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+/* Extension Popup CSS - Light & Dark Theme Support */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --border-color: #e2e8f0;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --brand-color: #0a66c2;
+  --brand-hover: #004182;
+  --badge-bg: #eff6ff;
+  --badge-text: #1d4ed8;
+  --badge-border: #bfdbfe;
+  --privacy-bg: #f0fdf4;
+  --privacy-text: #15803d;
+  --privacy-border: #bbf7d0;
+  --warning-bg: #fffbeb;
+  --warning-text: #b45309;
+  --warning-border: #fef3c7;
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0;
+  --focus-ring: #0a66c2;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-tertiary: #334155;
+    --border-color: #334155;
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    --brand-color: #38bdf8;
+    --brand-hover: #7dd3fc;
+    --badge-bg: #1e3a8a;
+    --badge-text: #93c5fd;
+    --badge-border: #1d4ed8;
+    --privacy-bg: #064e3b;
+    --privacy-text: #86efac;
+    --privacy-border: #047857;
+    --warning-bg: #451a03;
+    --warning-text: #fde68a;
+    --warning-border: #78350f;
+    --card-bg: #1e293b;
+    --card-border: #334155;
+    --focus-ring: #38bdf8;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  }
+}
+
+* {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  width: 300px;
-  background-color: #f9fafb;
-  color: #1f2937;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  width: 340px;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.45;
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 .popup-container {
-  padding: 16px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
+/* Header */
 .popup-header {
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 10px;
+}
+
+.header-branding {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 12px;
 }
 
 .popup-icon {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .popup-title {
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0;
-  color: #0a66c2;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
 }
 
+.badge-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.version-badge {
+  font-size: 10px;
+  font-weight: 600;
+  background-color: var(--badge-bg);
+  color: var(--badge-text);
+  border: 1px solid var(--badge-border);
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+.privacy-badge {
+  font-size: 10px;
+  font-weight: 600;
+  background-color: var(--privacy-bg);
+  color: var(--privacy-text);
+  border: 1px solid var(--privacy-border);
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+/* Main Content */
 .popup-content {
-  font-size: 13px;
-  line-height: 1.4;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.status-badge {
-  display: inline-block;
-  background-color: #e0e7ff;
-  color: #3730a3;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 12px;
-  margin-bottom: 10px;
+.popup-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.popup-description {
-  margin: 0 0 12px 0;
-  color: #4b5563;
+.section-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
 }
 
-.info-box {
-  background-color: #ffffff;
-  border: 1px solid #e5e7eb;
+/* Usage Steps */
+.usage-steps {
+  padding-left: 18px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.usage-steps li strong {
+  color: var(--text-primary);
+}
+
+/* Styles Grid */
+.styles-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.style-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 6px;
-  padding: 10px;
+  padding: 5px 10px;
   font-size: 12px;
 }
 
-.info-box p {
-  margin: 4px 0;
+.style-label {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.style-preview {
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* Notice / Warning / Privacy Box */
+.notice-box {
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.notice-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.notice-icon {
+  font-size: 12px;
+}
+
+.notice-title {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.warning-box {
+  background-color: var(--warning-bg);
+  color: var(--warning-text);
+  border: 1px solid var(--warning-border);
+}
+
+.warning-box .notice-title {
+  color: var(--warning-text);
+}
+
+.warning-box .notice-text {
+  color: var(--warning-text);
+  opacity: 0.95;
+}
+
+.privacy-box {
+  background-color: var(--privacy-bg);
+  color: var(--privacy-text);
+  border: 1px solid var(--privacy-border);
+}
+
+.privacy-box .notice-title {
+  color: var(--privacy-text);
+}
+
+.privacy-box .notice-text {
+  color: var(--privacy-text);
+  opacity: 0.95;
+}
+
+/* Footer */
+.popup-footer {
+  border-top: 1px solid var(--border-color);
+  padding-top: 10px;
+  display: flex;
+  justify-content: center;
+}
+
+.footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--brand-color);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.footer-link:hover {
+  color: var(--brand-hover);
+  background-color: var(--bg-tertiary);
+  text-decoration: underline;
+}
+
+.footer-link:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.github-icon {
+  flex-shrink: 0;
 }

@@ -7,22 +7,95 @@
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <div class="popup-container">
+  <div class="popup-container" id="popup-app">
+    <!-- Header Section -->
     <header class="popup-header">
-      <img src="../../assets/icons/icon-32.png" alt="Extension Icon" class="popup-icon">
-      <h1 class="popup-title">LinkedIn Text Formatter</h1>
-    </header>
-    <main class="popup-content">
-      <div class="status-badge">Phase 3 — Development Mode</div>
-      <p class="popup-description">
-        This extension allows you to highlight text inside LinkedIn's post editor and convert it into Bold, Italic, Underline, and more.
-      </p>
-      <div class="info-box">
-        <p><strong>Status:</strong> Chrome Extension Foundation loaded successfully.</p>
-        <p><em>Formatting features will be enabled in upcoming development phases.</em></p>
+      <div class="header-branding">
+        <img src="../../assets/icons/icon-32.png" alt="LinkedIn Text Formatter logo" class="popup-icon" width="28" height="28">
+        <div class="title-group">
+          <h1 class="popup-title">LinkedIn Text Formatter</h1>
+          <div class="badge-group">
+            <span class="version-badge" id="extension-version" aria-label="Extension Version">v0.1.0</span>
+            <span class="privacy-badge" title="Processes text locally inside your browser">100% Local</span>
+          </div>
+        </div>
       </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="popup-content">
+      <!-- How To Use -->
+      <section class="popup-section" aria-labelledby="section-how-to-use">
+        <h2 class="section-title" id="section-how-to-use">How to Use</h2>
+        <ol class="usage-steps">
+          <li>Open <strong>LinkedIn</strong> in your browser.</li>
+          <li>Start writing a post in the composer.</li>
+          <li>Highlight the text you wish to format.</li>
+          <li>Click a style on the floating toolbar.</li>
+        </ol>
+      </section>
+
+      <!-- Supported Formatting Styles -->
+      <section class="popup-section" aria-labelledby="section-styles">
+        <h2 class="section-title" id="section-styles">Supported Styles</h2>
+        <div class="styles-grid" role="list">
+          <div class="style-item" role="listitem">
+            <span class="style-label">Bold</span>
+            <span class="style-preview" aria-label="Bold example: Bold">𝐁𝐨𝐥𝐝</span>
+          </div>
+          <div class="style-item" role="listitem">
+            <span class="style-label">Italic</span>
+            <span class="style-preview" aria-label="Italic example: Italic">𝐼𝑡𝑎𝑙𝑖𝑐</span>
+          </div>
+          <div class="style-item" role="listitem">
+            <span class="style-label">Bold Italic</span>
+            <span class="style-preview" aria-label="Bold Italic example: Bold Italic">𝑩𝒐𝒍𝒅 𝑰𝒕𝒂𝒍𝒊𝒄</span>
+          </div>
+          <div class="style-item" role="listitem">
+            <span class="style-label">Underline</span>
+            <span class="style-preview" aria-label="Underline example: Underline">U̲n̲d̲e̲r̲l̲i̲n̲e̲</span>
+          </div>
+          <div class="style-item" role="listitem">
+            <span class="style-label">Double Underline</span>
+            <span class="style-preview" aria-label="Double Underline example: Double Underline">D̳o̳u̳b̳l̳e̳ ̳U̳n̳d̳e̳r̳l̳i̳n̳e̳</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Accessibility Warning -->
+      <section class="popup-section notice-box warning-box" aria-labelledby="section-accessibility">
+        <div class="notice-header">
+          <span class="notice-icon" aria-hidden="true">⚠️</span>
+          <h2 class="notice-title" id="section-accessibility">Accessibility Note</h2>
+        </div>
+        <p class="notice-text">
+          Styled text uses Unicode characters rather than native bold or italic formatting. Use it mainly for headings and short phrases because some screen readers may not interpret it normally.
+        </p>
+      </section>
+
+      <!-- Privacy Statement -->
+      <section class="popup-section notice-box privacy-box" aria-labelledby="section-privacy">
+        <div class="notice-header">
+          <span class="notice-icon" aria-hidden="true">🔒</span>
+          <h2 class="notice-title" id="section-privacy">Privacy Guaranteed</h2>
+        </div>
+        <p class="notice-text">
+          Your text is processed locally in your browser. It is not uploaded, stored, or sent to a server.
+        </p>
+      </section>
     </main>
+
+    <!-- Footer -->
+    <footer class="popup-footer">
+      <a href="https://github.com/HarshSoni200706/linkedin-text-formatter-extension" id="github-link" class="footer-link" target="_blank" rel="noopener noreferrer">
+        <svg class="github-icon" width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+          <path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.28.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+        </svg>
+        <span>View Source on GitHub</span>
+      </a>
+    </footer>
   </div>
+
   <script src="popup.js"></script>
 </body>
 </html>
