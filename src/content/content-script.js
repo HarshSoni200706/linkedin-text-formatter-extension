@@ -14,9 +14,11 @@
     return;
   }
   window.LinkedInTextFormatter.initialized = true;
+  const DEBUG = false;
+  function debugLog(...args) { if (DEBUG) console.log(...args); }
 
   const currentPath = typeof window !== 'undefined' && window.location ? window.location.pathname : '';
-  console.log(`[LinkedIn Text Formatter] Initialized in top frame: ${currentPath}`);
+  console.log(`[LinkedIn Text Formatter] Initialized: ${currentPath}`);
 
   console.log('[LinkedIn Text Formatter] Editor detector initialized.');
   if (window.LinkedInTextFormatter.SelectionManager) {
@@ -94,12 +96,12 @@
         if (isShadow) {
           const hostElem = rootNode.host;
           const hostIdStr = hostElem && hostElem.id ? `DIV#${hostElem.id}` : 'Shadow host';
-          console.log(`[LinkedIn Text Formatter] Shadow DOM editor detected (host: ${hostIdStr}).`);
+          debugLog(`[LinkedIn Text Formatter] Shadow DOM editor detected (host: ${hostIdStr}).`);
         } else {
-          console.log('[LinkedIn Text Formatter] Direct-document editor detected.');
+          debugLog('[LinkedIn Text Formatter] Direct-document editor detected.');
         }
       } else {
-        console.log(`[LinkedIn Text Formatter] Unsupported editable element ignored: ${result.reason}`);
+        debugLog(`[LinkedIn Text Formatter] Unsupported editable element ignored: ${result.reason}`);
       }
     }
   }
@@ -109,7 +111,7 @@
     const activePath = window.location.pathname;
     if (activePath !== lastPath) {
       lastPath = activePath;
-      console.log('[LinkedIn Text Formatter] LinkedIn route change detected.');
+      debugLog('[LinkedIn Text Formatter] LinkedIn route change detected.');
       // Clear last checked element when route changes
       lastCheckedElement = null;
     }
