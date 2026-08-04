@@ -11,6 +11,8 @@
   window.LinkedInTextFormatter = window.LinkedInTextFormatter || {};
 
   let isTransactionRunning = false;
+  const DEBUG = false;
+  function debugLog(...args) { if (DEBUG) console.log(...args); }
 
   const SUPPORTED_STYLES = new Set([
     'bold',
@@ -49,7 +51,7 @@
   function validateReplacementContext() {
     const SelectionManager = window.LinkedInTextFormatter.SelectionManager;
     if (!SelectionManager) {
-      console.log('[LinkedIn Text Formatter] Saved range validation result: failed (SelectionManager unavailable)');
+      debugLog('[LinkedIn Text Formatter] Saved range validation result: failed (SelectionManager unavailable)');
       return null;
     }
 

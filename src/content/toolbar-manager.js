@@ -18,40 +18,43 @@
     DOUBLE_UNDERLINE: 'double-underline'
   };
 
+  const DEBUG = false;
+  function debugLog(...args) { if (DEBUG) console.log(...args); }
+
   const BUTTON_CONFIGS = [
     {
       action: FORMAT_STYLES.BOLD,
       label: 'B',
       title: 'Bold',
-      ariaLabel: 'Format text as Bold',
+      ariaLabel: 'Format selected text as Bold',
       className: 'ltf-toolbar__button--bold'
     },
     {
       action: FORMAT_STYLES.ITALIC,
       label: 'I',
       title: 'Italic',
-      ariaLabel: 'Format text as Italic',
+      ariaLabel: 'Format selected text as Italic',
       className: 'ltf-toolbar__button--italic'
     },
     {
       action: FORMAT_STYLES.BOLD_ITALIC,
       label: 'BI',
       title: 'Bold Italic',
-      ariaLabel: 'Format text as Bold Italic',
+      ariaLabel: 'Format selected text as Bold Italic',
       className: 'ltf-toolbar__button--bold-italic'
     },
     {
       action: FORMAT_STYLES.UNDERLINE,
       label: 'U',
       title: 'Underline',
-      ariaLabel: 'Format text as Underline',
+      ariaLabel: 'Format selected text as Underline',
       className: 'ltf-toolbar__button--underline'
     },
     {
       action: FORMAT_STYLES.DOUBLE_UNDERLINE,
       label: 'U',
       title: 'Double Underline',
-      ariaLabel: 'Format text as Double Underline',
+      ariaLabel: 'Format selected text as Double Underline',
       className: 'ltf-toolbar__button--double-underline'
     }
   ];
@@ -136,6 +139,14 @@
   .ltf-toolbar__button:focus-visible { outline-color: #70b5f9; background-color: rgba(112, 181, 249, 0.15); }
   .ltf-toolbar__button:active { background-color: rgba(255, 255, 255, 0.2); }
 }
+@media (prefers-reduced-motion: reduce) {
+  .ltf-toolbar,
+  .ltf-toolbar__button {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+  }
+}
 `;
 
   /**
@@ -150,7 +161,7 @@
       styleEl.setAttribute('data-linkedin-text-formatter-style', 'true');
       styleEl.textContent = TOOLBAR_CSS_TEXT;
       shadowRoot.appendChild(styleEl);
-      console.log('[LinkedIn Text Formatter] Shadow toolbar stylesheet inserted or reused.');
+      debugLog('[LinkedIn Text Formatter] Shadow toolbar stylesheet inserted or reused.');
     }
   }
 

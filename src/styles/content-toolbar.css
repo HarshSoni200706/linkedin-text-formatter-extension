@@ -110,3 +110,14 @@
     background-color: rgba(255, 255, 255, 0.2);
   }
 }
+
+/* Reduced motion preference support */
+@media (prefers-reduced-motion: reduce) {
+  .ltf-toolbar,
+  .ltf-toolbar__button {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+  }
+}
+

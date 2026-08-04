@@ -10,21 +10,22 @@ LinkedIn's post editor does not provide native rich text formatting (bolding, it
 
 ## Proposed Solution
 
-The **LinkedIn Text Formatter Extension** inserts an inline floating toolbar whenever text is highlighted inside LinkedIn's post creation modal. Users can convert selected text to five distinct Unicode formatting styles with a single click, completely locally and seamlessly within their workflow.
+The **LinkedIn Text Formatter Extension** inserts an inline floating toolbar whenever text is highlighted inside LinkedIn's post creation modal. Users can convert selected text to five distinct Unicode formatting styles with a single click or keyboard shortcut, completely locally and seamlessly within their workflow.
 
 ---
 
 ## MVP Features
 
-- **Direct LinkedIn Integration:** Works directly within LinkedIn's post creation modal.
+- **Direct LinkedIn Integration:** Works directly within LinkedIn's post creation modal (supports direct-document and open Shadow DOM composers).
 - **Five Supported Text Styles:**
-  - **Bold** (e.g., 𝑩𝒐𝒍𝒅 or 𝐁𝐨𝐥𝐝)
-  - *Italic* (e.g., 𝑰𝒕𝒂𝒍𝒊𝒄 or 𝐼𝑡𝑎𝑙𝑖𝑐)
-  - ***Bold Italic*** (e.g., 𝑩𝒐𝒍𝒅 𝑰𝒕𝒂𝒍𝒊𝒄)
-  - <u>Underline</u> (Combining Unicode Low Line)
-  - <u>̲Double Underline</u> (Combining Unicode Double Low Line)
+  - **Bold** (`𝐁𝐨𝐥𝐝`)
+  - *Italic* (`𝐼𝑡𝑎𝑙𝑖𝑐`)
+  - ***Bold Italic*** (`𝑩𝒐𝒍𝒅 𝑰𝒕𝒂𝒍𝒊𝒄`)
+  - <u>Underline</u> (`U̲n̲d̲e̲r̲l̲i̲n̲e̲`)
+  - <u>̲Double Underline</u> (`D̳o̳u̳b̳l̳e̳ ̳U̳n̳d̳e̳r̳l̳i̳n̳e̳`)
 - **Inline Floating Toolbar:** Appears positioned near selected text with minimal disruption.
-- **Extension Popup:** Accessible toolbar popup providing usage instructions, style previews, Unicode accessibility guidance, privacy guarantee, and link to GitHub repository.
+- **Full Keyboard & Mouse Support:** Accessible toolbar buttons with explicit aria-labels, focus indicators, and Escape key dismissal.
+- **Extension Popup:** Accessible toolbar popup providing usage instructions, style previews, Unicode accessibility guidance, privacy guarantee, supported scope notice, and link to GitHub repository.
 - **Local Processing:** 100% client-side text conversion with zero data transmission or tracking.
 
 ---
@@ -47,6 +48,32 @@ To maintain security, privacy, and performance, this extension follows the princ
 
 ---
 
+## Supported LinkedIn Editor Scope
+
+> [!NOTE]
+> **Version 1 Scope Notice:** This extension is designed specifically for LinkedIn's **Create a Post** composer (supporting both direct-document and open Shadow DOM modal variations). 
+> 
+> Comments, direct messaging, search boxes, group posts, and pulse article editors are **not** currently supported in Version 1. The extension silently ignores text selections in unsupported fields to prevent disruption to standard LinkedIn usage.
+
+---
+
+## Interaction Workflows
+
+### Mouse Workflow
+1. Highlight text inside LinkedIn's Create a Post editor using mouse drag or double/triple click.
+2. The inline floating toolbar appears directly above (or below) the selection.
+3. Click any of the 5 formatting buttons.
+4. The text is transformed instantly, focus returns to the editor, and the caret is placed after the inserted formatted text.
+
+### Keyboard Workflow
+1. Highlight text inside LinkedIn's Create a Post editor using `Shift + Arrow keys` or `Ctrl + A`.
+2. Press `Tab` to shift focus into the floating formatting toolbar.
+3. Use `Tab` / `Shift + Tab` to move between formatting buttons (focus ring is clearly visible in both light and dark themes).
+4. Press `Enter` or `Space` to activate the chosen formatting style.
+5. Press `Escape` at any time to dismiss the toolbar without altering selected text or corrupting the editor.
+
+---
+
 ## Installation & Developer Mode Testing
 
 To load the extension manually into Google Chrome for testing:
@@ -57,38 +84,28 @@ To load the extension manually into Google Chrome for testing:
 4. Select the `linkedin-text-formatter-extension` folder.
 5. Confirm that the extension appears in the list without any manifest or syntax errors.
 
-### Verifying Extension Components
-
-- **Testing the Popup:** Click the extension icon in Chrome's toolbar (or pinned extensions menu). The popup should open displaying the usage instructions, supported styles, accessibility notice, privacy statement, and manifest version.
-- **Testing the Content Script:**
-  1. Open [LinkedIn](https://www.linkedin.com/).
-  2. Open Chrome Developer Tools (`F12` or `Ctrl+Shift+I` / `Cmd+Option+I`).
-  3. Open the **Console** tab.
-  4. Look for the message: `[LinkedIn Text Formatter] Editor detector initialized.`
-
 ---
 
-## Unicode Formatting Engine
+## User Experience, Accessibility & Privacy (Phase 10 Audit)
 
-This project contains a standalone, zero-dependency Unicode formatting engine. It transforms plain text into stylized representations without using HTML or CSS.
+### Accessible Button Naming & Focus Indicators
+- Every toolbar button is a semantic `<button type="button">` with descriptive accessible names:
+  - `Format selected text as Bold`
+  - `Format selected text as Italic`
+  - `Format selected text as Bold Italic`
+  - `Format selected text as Underline`
+  - `Format selected text as Double Underline`
+- High-contrast `:focus-visible` outline rings are implemented for both Light (`#0a66c2`) and Dark (`#70b5f9`) appearance themes.
+- Contrast ratios pass WCAG AA requirements across all text elements (4.5:1 for normal text, 3:1 for UI focus rings).
 
-### Native Rich Text vs. Unicode Styling
-- **Native Rich Text:** Uses markup tags (`<b>`, `<i>`, `<u>`) or styling properties to change the presentation layer. It preserves the underlying standard ASCII characters.
-- **Unicode Styling:** Modifies the actual text data by converting characters to specific mathematical alphanumeric code points. This allows the styled text to persist when copied and pasted onto platforms that only support plain text, such as LinkedIn.
+### Reduced-Motion Support
+- Respects system preferences via `@media (prefers-reduced-motion: reduce)`.
+- Transitions, transforms, and animations are disabled for users with reduced motion preferences.
 
-### Supported Characters & Formatting Logic
-- **Bold (`bold`):** Translates standard English uppercase `A–Z` and lowercase `a–z` to Mathematical Bold Serif equivalents, and digits `0–9` to Mathematical Bold digits.
-- **Italic (`italic`):** Translates standard English uppercase `A–Z` and lowercase `a–z` to Mathematical Italic Serif equivalents. Digits are left unstyled as the Unicode italic serif alphabet does not define italic digits.
-  - *Exception:* Lowercase italic `h` is mapped to the Planck Constant (`ℎ`, `U+210E`) because `U+1D455` is undefined in the standard mathematical Unicode block.
-- **Bold Italic (`bold-italic`):** Translates uppercase `A–Z` and lowercase `a–z` to Mathematical Bold Italic Serif equivalents. Digits are left unstyled.
-- **Underline (`underline`):** Appends U+0332 (`COMBINING LOW LINE`) to each eligible character.
-- **Double Underline (`double-underline`):** Appends U+0333 (`COMBINING DOUBLE LOW LINE`) to each eligible character.
-
-### Non-ASCII and Unsupported Characters
-Punctuation, emojis, hashtags, URLs, and non-Latin alphabets (such as Chinese, Hindi, etc.) are **not** modified. Emojis and newlines are skipped when applying underline combining marks to avoid visual layout corruption.
-
-### Idempotency & Normalization
-To prevent stacked transformations or corrupted text, the formatting engine automatically passes all input through a normalizer (`src/formatter/text-normalizer.js`) before applying a new style. The normalizer maps styled Unicode characters back to their plain ASCII counterparts and strips existing U+0332/U+0333 combining marks.
+### Privacy Audit & Zero Data Transmission
+- **100% Local Processing:** Your text is processed locally in your browser. It is not uploaded, stored, or sent to a server.
+- Zero analytics, tracking scripts, external fonts, remote resources, or network calls.
+- Debug logging is disabled by default (`DEBUG = false`), ensuring clean production execution without user text logging.
 
 ---
 
@@ -98,26 +115,6 @@ To prevent stacked transformations or corrupted text, the formatting engine auto
 > **Accessibility Notice:** Styled text generated by this extension uses mathematical and stylized Unicode code points rather than semantic HTML (`<b>`, `<i>`) or CSS styles. Some screen readers (used by visually impaired users) may read Unicode formatted text character-by-character, pronounce mathematical symbol names, or skip them entirely. 
 > 
 > **Best Practice:** Use Unicode styling sparingly—primarily for short headings, single keywords, or key emphasis—and avoid converting entire paragraphs.
-
----
-
-## Extension Popup (Phase 9)
-
-The extension includes a lightweight, offline-ready Chrome toolbar popup (`src/popup/popup.html`).
-
-### Key Information Displayed
-- **Header:** Extension icon, name, dynamically populated version (`chrome.runtime.getManifest().version`), and a "100% Local" privacy badge.
-- **How to Use:** Clear step-by-step instructions for selecting text in LinkedIn's post editor and formatting it.
-- **Supported Styles Preview:** Live visual previews of all five formatting options (`𝐁𝐨𝐥𝐝`, `𝐼𝑡𝑎𝑙𝑖𝑐`, `𝑩𝒐𝒍𝒅 𝑰𝒕𝒂𝒍𝒊𝒄`, `U̲n̲d̲e̲r̲l̲i̲n̲e̲`, `D̳o̳u̳b̳l̳e̳ ̳U̳n̳d̳e̳r̳l̳i̳n̲e̲`) alongside plain-text labels.
-- **Accessibility Warning:** Explicit notice regarding screen reader behavior on Unicode text.
-- **Privacy Statement:** Guarantee that text processing occurs 100% locally in the browser with zero external server communication.
-- **GitHub Repository Link:** Direct link to the source repository (`https://github.com/HarshSoni200706/linkedin-text-formatter-extension`).
-
-### Product Decision: No Enable/Disable Toggle in Version 1
-Version 1 intentionally omits an enable/disable toggle and Chrome Storage permission:
-- The floating toolbar is strictly scoped to valid text selections inside supported LinkedIn post editors.
-- The extension content script does not execute on unrelated web pages.
-- Omitting the toggle preserves minimum permission scope (`storage` permission is not requested).
 
 ---
 
@@ -173,33 +170,16 @@ linkedin-text-formatter-extension/
     ├── toolbar-manager.test.js
     ├── text-replacement-manager.test.js
     ├── popup.test.js
+    ├── ux-accessibility.test.js
     ├── runner.html
     └── test-cases.md
 ```
 
 ---
 
-## Text Replacement Engine (Phase 8)
-
-Phase 8 connects the floating toolbar to the Unicode formatting engine via `src/content/text-replacement-manager.js`.
-
-### How Formatting is Applied
-When a toolbar action button is activated:
-1. **Context & Selection Validation:** Confirms valid active selection, range attachment, and editor connectivity.
-2. **Entity Protection Check:** Inspects selected contents for atomic non-editable entities (e.g., LinkedIn mentions, entity cards, or `contenteditable="false"` nodes). If present, formatting aborts safely.
-3. **Selected-Text Reading & Conversion:** Reads `range.toString()`, normalizes existing Unicode marks, and applies the chosen style (`bold`, `italic`, `bold-italic`, `underline`, `double-underline`).
-4. **Insertion Strategy:** 
-   - **Primary Strategy:** Uses `document.execCommand('insertText', false, formattedText)` while the range is restored. This native browser text command replaces the selected range, triggers LinkedIn's editor state listeners, and preserves browser native `Ctrl+Z` undo history.
-   - **Fallback Strategy:** Uses DOM Range operations (`range.deleteContents()`, `range.insertNode(textNode)`), dispatches synthetic input events, and performs safe rollback if an exception occurs.
-5. **Event Notification:** Dispatches a composed, bubbling `InputEvent` (`inputType: 'insertText'`) on the editor element to notify LinkedIn's post composer of state changes.
-6. **Caret Placement & Focus:** Collapses the caret immediately after the inserted formatted text, restores editor focus, and allows the user to continue typing naturally.
-7. **Toolbar Hiding & Cleanup:** Hides the toolbar with reason `'formatting-applied'`, clears the saved selection, and ends protected interaction safely.
-
----
-
 ## Running Automated Test Suites
 
-The extension contains 183 zero-dependency unit tests across 6 test suites.
+The extension contains **212 zero-dependency unit tests** across 7 test suites.
 
 To run all automated tests in Terminal using Node.js:
 ```bash
@@ -209,14 +189,15 @@ node tests/selection-manager.test.js
 node tests/toolbar-manager.test.js
 node tests/text-replacement-manager.test.js
 node tests/popup.test.js
+node tests/ux-accessibility.test.js
 ```
 
 ---
 
 ## Current Development Status
 
-* **Active Phase:** Phase 9 — Extension Popup (Implementation complete, 183 Node unit tests passing across 6 test suites, pending manual browser check of toolbar popup UI).
-* **Next Phase:** Phase 10 — Manual Quality Assurance & Edge Case Hardening.
+* **Active Phase:** Phase 10 — User Experience and Accessibility (Implementation complete, 212 Node unit tests passing across 7 test suites, pending manual browser accessibility and zoom verification).
+* **Next Phase:** Phase 11 — Testing and Quality Assurance.
 
 ---
 

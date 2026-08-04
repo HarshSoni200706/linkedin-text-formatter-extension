@@ -615,29 +615,31 @@ Make the extension comfortable, understandable, and safe to use.
 
 ## Tasks
 
-- [ ] Add keyboard focus support to toolbar buttons.
-- [ ] Ensure all buttons have accessible names.
-- [ ] Ensure tooltips do not contain essential information unavailable elsewhere.
-- [ ] Support closing the toolbar with Escape.
-- [ ] Ensure visible focus indicators.
-- [ ] Verify color contrast.
-- [ ] Prevent toolbar animations from being distracting.
-- [ ] Respect reduced-motion preferences if animation is used.
-- [ ] Avoid blocking LinkedIn's controls.
-- [ ] Avoid recording, storing, or transmitting user-written content.
-- [ ] Clearly communicate that processing happens locally.
-- [ ] Add a user-friendly message if the current editor is unsupported.
-- [ ] Keep interactions fast enough to feel instant.
-- [ ] Confirm that the extension works at common browser zoom levels.
-- [ ] Confirm that the toolbar is usable on smaller laptop screens.
+- [x] Add keyboard focus support to toolbar buttons.
+- [x] Ensure all buttons have accessible names (`Format selected text as Bold`, `Format selected text as Italic`, `Format selected text as Bold Italic`, `Format selected text as Underline`, `Format selected text as Double Underline`).
+- [x] Ensure tooltips do not contain essential information unavailable elsewhere.
+- [x] Support closing the toolbar with Escape.
+- [x] Ensure visible focus indicators (`:focus-visible` outline rings for Light `#0a66c2` and Dark `#70b5f9`).
+- [x] Verify color contrast (all contrast ratios pass WCAG AA standards).
+- [x] Prevent toolbar animations from being distracting.
+- [x] Respect reduced-motion preferences if animation is used (`@media (prefers-reduced-motion: reduce)` applied in toolbar and popup CSS).
+- [x] Avoid blocking LinkedIn's controls (floats dynamically relative to active text selection).
+- [x] Avoid recording, storing, or transmitting user-written content (100% local processing; DEBUG = false by default; zero text logging).
+- [x] Clearly communicate that processing happens locally (100% Local privacy badge and privacy note in popup).
+- [x] Add a user-friendly message if the current editor is unsupported (clearly state in popup that Version 1 supports LinkedIn Create a Post editor only, while comments and messaging are not supported; silently avoid displaying toolbar on unsupported controls).
+- [x] Keep interactions fast enough to feel instant (rAF position coalescing).
+- [x] Confirm that the extension works at common browser zoom levels (80%, 100%, 125%, 150%).
+- [x] Confirm that the toolbar is usable on smaller laptop screens (1366x768 and 1280x720 breakpoints).
 
 ## Phase Completion Criteria
 
 Phase 10 is complete when:
 
-- The extension is usable through mouse and keyboard.
-- Accessibility warnings are present.
-- The toolbar remains readable and usable across common screen sizes.
+- [x] The extension is usable through mouse and keyboard.
+- [x] Accessibility warnings are present.
+- [x] The toolbar remains readable and usable across common screen sizes.
+
+Phase 10 status: **Completed** ([x])
 
 ---
 

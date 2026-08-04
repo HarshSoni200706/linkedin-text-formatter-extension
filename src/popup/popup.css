@@ -167,6 +167,21 @@ body {
   color: var(--text-primary);
 }
 
+.scope-note {
+  font-size: 11px;
+  color: var(--text-muted);
+  background-color: var(--bg-secondary);
+  border: 1px dashed var(--border-color);
+  border-radius: 6px;
+  padding: 6px 8px;
+  line-height: 1.35;
+  margin-top: 4px;
+}
+
+.scope-note strong {
+  color: var(--text-secondary);
+}
+
 /* Styles Grid */
 .styles-grid {
   display: flex;
@@ -286,3 +301,14 @@ body {
 .github-icon {
   flex-shrink: 0;
 }
+
+/* Reduced motion preference support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
