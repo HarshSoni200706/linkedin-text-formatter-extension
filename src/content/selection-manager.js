@@ -374,6 +374,25 @@
       return;
     }
 
+    // Check if selection intersects any protected entity (links, mentions) or plain-text URL
+    const rangeIntersectsProtectedContent = window.LinkedInTextFormatter ? (
+      window.LinkedInTextFormatter.rangeIntersectsProtectedContent || window.LinkedInTextFormatter.rangeIntersectsProtectedEntity
+    ) : null;
+    const rangeIntersectsUrlText = window.LinkedInTextFormatter ? window.LinkedInTextFormatter.rangeIntersectsUrlText : null;
+
+    const isProtected = (rangeIntersectsProtectedContent && rangeIntersectsProtectedContent(range, startRoot)) ||
+                        (rangeIntersectsUrlText && rangeIntersectsUrlText(range, startRoot));
+
+    if (isProtected) {
+      console.log('[LinkedIn Text Formatter] Selection rejected: protected content');
+      clearSavedSelection();
+      const ToolbarManager = window.LinkedInTextFormatter ? window.LinkedInTextFormatter.ToolbarManager : null;
+      if (ToolbarManager && typeof ToolbarManager.hide === 'function') {
+        ToolbarManager.hide('protected-entity-rejected');
+      }
+      return;
+    }
+
     const rootOfEditor = startRoot.getRootNode ? startRoot.getRootNode() : null;
     if (rootOfEditor && rootOfEditor.nodeType === 11) {
       if (!rootOfEditor.host || (typeof rootOfEditor.host.isConnected === 'boolean' && !rootOfEditor.host.isConnected)) {

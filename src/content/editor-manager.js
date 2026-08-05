@@ -387,6 +387,294 @@
     return checkEditorSupport(element).supported;
   }
 
+  const PROTECTED_ENTITY_SELECTOR = [
+    'a[href]',
+    'a',
+    '[role="link"]',
+    '[role="mention"]',
+    '.mention',
+    '.entity-mention',
+    '.ql-mention',
+    '.ql-mention-token',
+    '.ql-link',
+    '[data-entity-hovercard-id]',
+    '[data-mention]',
+    '[data-link]',
+    '[contenteditable="false"]'
+  ].join(', ');
+
+  /**
+   * Helper: Checks whether a DOM element matches protected link or mention entity criteria.
+   */
+  function isProtectedEntityElement(element, editor) {
+    if (!element) return false;
+    const matchFn = (node) => {
+      if (!node || node === editor || !node.getAttribute) return false;
+      if (typeof node.matches === 'function') {
+        try {
+          if (node.matches(PROTECTED_ENTITY_SELECTOR)) return true;
+        } catch (e) {
+          // Fallback if selector matching fails
+        }
+      }
+      const tagName = node.tagName ? node.tagName.toUpperCase() : '';
+      if (tagName === 'A' || node.getAttribute('href') !== null) return true;
+      if (node.getAttribute('role') === 'link' || node.getAttribute('role') === 'mention') return true;
+      if (node.getAttribute('contenteditable') === 'false') return true;
+      if (node.getAttribute('data-entity-hovercard-id') !== null || node.getAttribute('data-mention') !== null) return true;
+      const className = typeof node.className === 'string' ? node.className : '';
+      if (className.includes('mention') || className.includes('ql-link')) return true;
+      return false;
+    };
+
+    if (element.nodeType === 3 /* TEXT_NODE */) {
+      return composedClosest(element.parentElement, matchFn) !== null;
+    }
+    return matchFn(element) || composedClosest(element, matchFn) !== null;
+  }
+
+  /**
+   * Checks if a selection Range intersects any protected entity (link, mention, contenteditable=false)
+   * within the supported LinkedIn editor.
+   */
+  function rangeIntersectsProtectedEntity(range, editor) {
+    if (!range) return false;
+
+    // 1. Check boundary containers (startContainer, endContainer, commonAncestorContainer)
+    if (range.startContainer && isProtectedEntityElement(range.startContainer, editor)) {
+      return true;
+    }
+    if (range.endContainer && isProtectedEntityElement(range.endContainer, editor)) {
+      return true;
+    }
+    if (range.commonAncestorContainer && isProtectedEntityElement(range.commonAncestorContainer, editor)) {
+      return true;
+    }
+
+    // 2. Check cloneContents for embedded protected elements
+    try {
+      if (typeof range.cloneContents === 'function') {
+        const fragment = range.cloneContents();
+        if (fragment && typeof fragment.querySelector === 'function') {
+          if (fragment.querySelector(PROTECTED_ENTITY_SELECTOR)) {
+            return true;
+          }
+        }
+      }
+    } catch (e) {
+      // Ignore clone error
+    }
+
+    // 3. Query protected elements within the search scope and check Range intersection
+    const commonElem = range.commonAncestorContainer ? (
+      range.commonAncestorContainer.nodeType === 1 ? range.commonAncestorContainer : range.commonAncestorContainer.parentElement
+    ) : null;
+    const root = editor || (commonElem ? commonElem.ownerDocument : (typeof document !== 'undefined' ? document : null));
+    const searchScope = (commonElem && typeof commonElem.querySelectorAll === 'function') ? commonElem : root;
+
+    if (searchScope && typeof searchScope.querySelectorAll === 'function') {
+      let candidates = [];
+      try {
+        candidates = Array.from(searchScope.querySelectorAll(PROTECTED_ENTITY_SELECTOR));
+      } catch (e) {
+        // Fallback if querySelectorAll fails
+      }
+
+      if (commonElem && isProtectedEntityElement(commonElem, editor)) {
+        candidates.push(commonElem);
+      }
+
+      for (let i = 0; i < candidates.length; i++) {
+        const candidate = candidates[i];
+        if (!candidate) continue;
+
+        // Check if intersectsNode returns true
+        if (typeof range.intersectsNode === 'function') {
+          try {
+            if (range.intersectsNode(candidate)) {
+              return true;
+            }
+          } catch (e) {
+            // Fallback to boundary point comparison
+          }
+        }
+
+        // Boundary point comparison fallback
+        try {
+          const ownerDoc = candidate.ownerDocument || (typeof document !== 'undefined' ? document : null);
+          if (ownerDoc && typeof ownerDoc.createRange === 'function') {
+            const candRange = ownerDoc.createRange();
+            candRange.selectNode(candidate);
+            const startToEnd = range.compareBoundaryPoints(Range.START_TO_END, candRange);
+            const endToStart = range.compareBoundaryPoints(Range.END_TO_START, candRange);
+            if (endToStart < 0 && startToEnd > 0) {
+              return true;
+            }
+          }
+        } catch (e) {
+          // Ignore range comparison failure
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Helper: Detects all URL character spans in a plain-text string.
+   * Returns array of objects: [{ start: number, end: number }]
+   */
+  function findUrlSpansInText(text) {
+    if (!text || typeof text !== 'string') return [];
+    const spans = [];
+
+    // Regex matching URLs with http/https schemes, www. prefix, or bare domain + path
+    const urlRegex = /(?:https?:\/\/|www\.)[^\s<>"'\u00A0()\[\]{}]+|(?:[a-zA-Z0-9-]+\.)+(?:com|org|net|edu|gov|io|co|me|info|biz|dev|app|ai|ca|uk|us|de|fr|in|br|au|jp|tv|cc|xyz|tech|online|store|site)\/[^\s<>"'\u00A0()\[\]{}]*/gi;
+
+    let match;
+    while ((match = urlRegex.exec(text)) !== null) {
+      let rawUrl = match[0];
+      let start = match.index;
+      let end = start + rawUrl.length;
+
+      // Trim trailing sentence punctuation marks
+      while (end > start) {
+        const lastChar = text.charAt(end - 1);
+        if (/[.,!?:;)"'\]}>]/.test(lastChar)) {
+          end--;
+        } else {
+          break;
+        }
+      }
+
+      if (end > start) {
+        spans.push({ start, end });
+      }
+    }
+
+    return spans;
+  }
+
+  /**
+   * Helper: Traverses tree under root and collects text nodes in document order.
+   */
+  function collectTextNodes(root) {
+    const nodes = [];
+    if (!root) return nodes;
+
+    function traverse(node) {
+      if (!node) return;
+      if (node.nodeType === 3 /* TEXT_NODE */) {
+        nodes.push(node);
+      } else if (node.childNodes && node.childNodes.length > 0) {
+        for (let i = 0; i < node.childNodes.length; i++) {
+          traverse(node.childNodes[i]);
+        }
+      }
+    }
+
+    traverse(root);
+    return nodes;
+  }
+
+  /**
+   * Helper: Calculates cumulative character offset of targetNode + targetOffset within root.
+   */
+  function getCharOffset(root, targetNode, targetOffset) {
+    if (!root || !targetNode) return 0;
+    const textNodes = collectTextNodes(root);
+    let cumulative = 0;
+
+    for (let i = 0; i < textNodes.length; i++) {
+      const tn = textNodes[i];
+      if (tn === targetNode) {
+        const valLen = tn.nodeValue ? tn.nodeValue.length : 0;
+        return cumulative + Math.min(targetOffset, valLen);
+      }
+      cumulative += tn.nodeValue ? tn.nodeValue.length : 0;
+    }
+
+    // Fallback if targetNode is an Element node
+    if (targetNode.nodeType === 1 /* ELEMENT_NODE */) {
+      let elemOffset = 0;
+      const children = Array.from(targetNode.childNodes || []);
+      for (let i = 0; i < Math.min(targetOffset, children.length); i++) {
+        const childText = collectTextNodes(children[i]);
+        for (let j = 0; j < childText.length; j++) {
+          elemOffset += childText[j].nodeValue ? childText[j].nodeValue.length : 0;
+        }
+      }
+      let rootElemOffset = 0;
+      for (let i = 0; i < textNodes.length; i++) {
+        const tn = textNodes[i];
+        if (targetNode.contains && targetNode.contains(tn)) {
+          return rootElemOffset + elemOffset;
+        }
+        rootElemOffset += tn.nodeValue ? tn.nodeValue.length : 0;
+      }
+      return rootElemOffset;
+    }
+
+    return cumulative;
+  }
+
+  /**
+   * Checks if a selection Range overlaps any plain-text URL in its surrounding text block.
+   */
+  function rangeIntersectsUrlText(range, editor) {
+    if (!range) return false;
+    const startContainer = range.startContainer;
+    const endContainer = range.endContainer;
+    if (!startContainer || !endContainer) return false;
+
+    // Determine nearest common block element scope
+    let commonBlock = range.commonAncestorContainer;
+    if (commonBlock && commonBlock.nodeType === 3 /* TEXT_NODE */) {
+      commonBlock = commonBlock.parentElement;
+    }
+
+    const edRoot = editor || (startContainer.ownerDocument ? startContainer.ownerDocument.body : (typeof document !== 'undefined' ? document.body : null));
+    if (!commonBlock || (edRoot && edRoot.contains && !edRoot.contains(commonBlock))) {
+      commonBlock = edRoot;
+    }
+
+    const textNodes = collectTextNodes(commonBlock);
+    if (textNodes.length === 0) return false;
+
+    let fullText = '';
+    for (let i = 0; i < textNodes.length; i++) {
+      fullText += (textNodes[i].nodeValue || '');
+    }
+
+    if (!fullText) return false;
+
+    const urlSpans = findUrlSpansInText(fullText);
+    if (urlSpans.length === 0) return false;
+
+    const selStart = getCharOffset(commonBlock, startContainer, range.startOffset);
+    const selEnd = getCharOffset(commonBlock, endContainer, range.endOffset);
+
+    const realSelStart = Math.min(selStart, selEnd);
+    const realSelEnd = Math.max(selStart, selEnd);
+
+    for (let i = 0; i < urlSpans.length; i++) {
+      const span = urlSpans[i];
+      if (realSelStart < span.end && realSelEnd > span.start) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Combined protection check: returns true if selection intersects either a protected DOM entity or a plain-text URL.
+   */
+  function rangeIntersectsProtectedContent(range, editor) {
+    if (!range) return false;
+    return rangeIntersectsProtectedEntity(range, editor) || rangeIntersectsUrlText(range, editor);
+  }
+
   // Export functions to the namespace
   window.LinkedInTextFormatter.getComposedParent = getComposedParent;
   window.LinkedInTextFormatter.composedClosest = composedClosest;
@@ -396,6 +684,11 @@
   window.LinkedInTextFormatter.isExcludedControl = isExcludedControl;
   window.LinkedInTextFormatter.checkEditorSupport = checkEditorSupport;
   window.LinkedInTextFormatter.isSupportedLinkedInPostEditor = isSupportedLinkedInPostEditor;
+  window.LinkedInTextFormatter.isProtectedEntityElement = isProtectedEntityElement;
+  window.LinkedInTextFormatter.rangeIntersectsProtectedEntity = rangeIntersectsProtectedEntity;
+  window.LinkedInTextFormatter.findUrlSpansInText = findUrlSpansInText;
+  window.LinkedInTextFormatter.rangeIntersectsUrlText = rangeIntersectsUrlText;
+  window.LinkedInTextFormatter.rangeIntersectsProtectedContent = rangeIntersectsProtectedContent;
 
   // For testing in Node context
   if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
@@ -407,7 +700,12 @@
       isEditable,
       isExcludedControl,
       checkEditorSupport,
-      isSupportedLinkedInPostEditor
+      isSupportedLinkedInPostEditor,
+      isProtectedEntityElement,
+      rangeIntersectsProtectedEntity,
+      findUrlSpansInText,
+      rangeIntersectsUrlText,
+      rangeIntersectsProtectedContent
     };
   }
 })();
