@@ -87,14 +87,26 @@
   }
 
   /**
-   * Checks if the selection range contains atomic non-editable entity nodes.
+   * Checks if the selection range intersects atomic non-editable or link/mention entity nodes or plain-text URLs.
    */
-  function containsProtectedEntity(range) {
+  function containsProtectedEntity(range, editor) {
     if (!range) return false;
+
+    const rangeIntersectsProtectedContent = window.LinkedInTextFormatter ? (
+      window.LinkedInTextFormatter.rangeIntersectsProtectedContent || window.LinkedInTextFormatter.rangeIntersectsProtectedEntity
+    ) : null;
+    if (rangeIntersectsProtectedContent && rangeIntersectsProtectedContent(range, editor)) {
+      return true;
+    }
+
+    const rangeIntersectsUrlText = window.LinkedInTextFormatter ? window.LinkedInTextFormatter.rangeIntersectsUrlText : null;
+    if (rangeIntersectsUrlText && rangeIntersectsUrlText(range, editor)) {
+      return true;
+    }
 
     try {
       const fragment = range.cloneContents();
-      const nonEditable = fragment.querySelector('[contenteditable="false"], [data-entity-hovercard-id], .ql-mention');
+      const nonEditable = fragment.querySelector('a[href], [role="link"], [role="mention"], [contenteditable="false"], [data-entity-hovercard-id], .ql-mention, .ql-link');
       if (nonEditable) {
         return true;
       }
@@ -398,9 +410,15 @@
       }
       console.log(`[LinkedIn Text Formatter] Selected character count: ${selectedText.length}`);
 
-      // 6. Check for atomic protected non-editable entities
-      if (containsProtectedEntity(savedRange)) {
-        console.log('[LinkedIn Text Formatter] Formatting action failed: Atomic non-editable entity protected.');
+      // 6. Check for atomic protected non-editable entities and plain-text URLs
+      if (containsProtectedEntity(savedRange, editor)) {
+        console.log('[LinkedIn Text Formatter] Selection rejected: protected content');
+        if (SelectionManager && typeof SelectionManager.clearSelection === 'function') {
+          SelectionManager.clearSelection();
+        }
+        if (ToolbarManager && typeof ToolbarManager.hide === 'function') {
+          ToolbarManager.hide('protected-entity-detected');
+        }
         return false;
       }
 
