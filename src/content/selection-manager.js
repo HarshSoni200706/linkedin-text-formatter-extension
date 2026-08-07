@@ -10,6 +10,9 @@
   // Ensure the extension namespace exists
   window.LinkedInTextFormatter = window.LinkedInTextFormatter || {};
 
+  const DEBUG = false;
+  function debugLog(...args) { if (DEBUG) console.log(...args); }
+
   // Selection state
   const state = {
     savedRange: null,
@@ -201,7 +204,7 @@
       state.direction = 'forward';
       isCurrentlyValid = false;
       lastRangeSignature = null;
-      console.log('[LinkedIn Text Formatter] Saved selection cleared.');
+      debugLog('[LinkedIn Text Formatter] Saved selection cleared.');
       notifyInvalid();
     }
   }
@@ -210,7 +213,7 @@
   function restoreSavedSelection() {
     if (!isSavedRangeValid()) {
       clearSavedSelection();
-      console.log('[LinkedIn Text Formatter] Saved selection restoration failed: range is stale or invalid.');
+      debugLog('[LinkedIn Text Formatter] Saved selection restoration failed: range is stale or invalid.');
       return false;
     }
 
@@ -235,7 +238,7 @@
         selection.addRange(state.savedRange);
       }
 
-      console.log('[LinkedIn Text Formatter] Saved selection restoration succeeded.');
+      debugLog('[LinkedIn Text Formatter] Saved selection restoration succeeded.');
       return true;
     } catch (err) {
       console.error('[LinkedIn Text Formatter] Error restoring selection:', err);
@@ -305,34 +308,34 @@
     const isShadow = rootNode && rootNode.nodeType === 11;
     const sourceStr = isShadow ? 'shadow-root' : 'document';
 
-    console.log('[LinkedIn Text Formatter] Selection evaluation requested');
-    console.log('[LinkedIn Text Formatter] Active editor root type: ' + (isShadow ? 'shadow-root' : 'document'));
-    console.log('[LinkedIn Text Formatter] Selection source: ' + sourceStr);
+    debugLog('[LinkedIn Text Formatter] Selection evaluation requested');
+    debugLog('[LinkedIn Text Formatter] Active editor root type: ' + (isShadow ? 'shadow-root' : 'document'));
+    debugLog('[LinkedIn Text Formatter] Selection source: ' + sourceStr);
 
     if (!selection) {
-      console.log('[LinkedIn Text Formatter] Selection evaluation rejected: no selection object');
+      debugLog('[LinkedIn Text Formatter] Selection evaluation rejected: no selection object');
       clearSavedSelection();
       return;
     }
 
     const rangeCount = typeof selection.rangeCount === 'number' ? selection.rangeCount : (selection.type === 'Range' ? 1 : 0);
-    console.log('[LinkedIn Text Formatter] ' + (isShadow ? 'Shadow' : 'Document') + ' selection rangeCount: ' + rangeCount);
+    debugLog('[LinkedIn Text Formatter] ' + (isShadow ? 'Shadow' : 'Document') + ' selection rangeCount: ' + rangeCount);
 
     if (rangeCount === 0) {
-      console.log('[LinkedIn Text Formatter] Selection evaluation rejected: rangeCount is 0');
+      debugLog('[LinkedIn Text Formatter] Selection evaluation rejected: rangeCount is 0');
       clearSavedSelection();
       return;
     }
 
     const range = selection.getRangeAt ? selection.getRangeAt(0) : null;
     if (!range) {
-      console.log('[LinkedIn Text Formatter] Selection evaluation rejected: no range at index 0');
+      debugLog('[LinkedIn Text Formatter] Selection evaluation rejected: no range at index 0');
       clearSavedSelection();
       return;
     }
 
     if (range.collapsed || !range.toString() || range.toString().trim() === '') {
-      console.log('[LinkedIn Text Formatter] Selection evaluation rejected: selection is collapsed or empty');
+      debugLog('[LinkedIn Text Formatter] Selection evaluation rejected: selection is collapsed or empty');
       clearSavedSelection();
       return;
     }
@@ -340,7 +343,7 @@
     const isStartConnected = range.startContainer ? (typeof range.startContainer.isConnected === 'boolean' ? range.startContainer.isConnected : true) : false;
     const isEndConnected = range.endContainer ? (typeof range.endContainer.isConnected === 'boolean' ? range.endContainer.isConnected : true) : false;
     if (!isStartConnected || !isEndConnected) {
-      console.log('[LinkedIn Text Formatter] Selection evaluation rejected: boundary containers not connected');
+      debugLog('[LinkedIn Text Formatter] Selection evaluation rejected: boundary containers not connected');
       clearSavedSelection();
       return;
     }
@@ -356,20 +359,20 @@
     const endRoot = resolver(range.endContainer);
 
     if (!startRoot || startRoot !== endRoot) {
-      console.log('[LinkedIn Text Formatter] Selection evaluation rejected: boundaries belong to different editors');
+      debugLog('[LinkedIn Text Formatter] Selection evaluation rejected: boundaries belong to different editors');
       clearSavedSelection();
       return;
     }
 
     if (!detector(startRoot)) {
-      console.log('[LinkedIn Text Formatter] Selection evaluation rejected: editor is not supported');
+      debugLog('[LinkedIn Text Formatter] Selection evaluation rejected: editor is not supported');
       clearSavedSelection();
       return;
     }
 
     const isExcludedControl = window.LinkedInTextFormatter ? window.LinkedInTextFormatter.isExcludedControl : null;
     if (isExcludedControl && (isExcludedControl(range.startContainer) || isExcludedControl(range.endContainer))) {
-      console.log('[LinkedIn Text Formatter] Selection evaluation rejected: selection involves excluded control (.ql-clipboard)');
+      debugLog('[LinkedIn Text Formatter] Selection evaluation rejected: selection involves excluded control (.ql-clipboard)');
       clearSavedSelection();
       return;
     }
@@ -384,7 +387,7 @@
                         (rangeIntersectsUrlText && rangeIntersectsUrlText(range, startRoot));
 
     if (isProtected) {
-      console.log('[LinkedIn Text Formatter] Selection rejected: protected content');
+      debugLog('[LinkedIn Text Formatter] Selection rejected: protected content');
       clearSavedSelection();
       const ToolbarManager = window.LinkedInTextFormatter ? window.LinkedInTextFormatter.ToolbarManager : null;
       if (ToolbarManager && typeof ToolbarManager.hide === 'function') {
@@ -396,13 +399,13 @@
     const rootOfEditor = startRoot.getRootNode ? startRoot.getRootNode() : null;
     if (rootOfEditor && rootOfEditor.nodeType === 11) {
       if (!rootOfEditor.host || (typeof rootOfEditor.host.isConnected === 'boolean' && !rootOfEditor.host.isConnected)) {
-        console.log('[LinkedIn Text Formatter] Selection evaluation rejected: shadow host disconnected');
+        debugLog('[LinkedIn Text Formatter] Selection evaluation rejected: shadow host disconnected');
         clearSavedSelection();
         return;
       }
     }
 
-    console.log('[LinkedIn Text Formatter] ' + (isShadow ? 'Shadow' : 'Document') + ' selection validation passed');
+    debugLog('[LinkedIn Text Formatter] ' + (isShadow ? 'Shadow' : 'Document') + ' selection validation passed');
 
     // Create signature to prevent duplicate valid callbacks
     const currentSignature = `${range.startContainer === range.endContainer ? 'same' : 'diff'}_${range.startOffset}_${range.endOffset}`;
@@ -415,7 +418,7 @@
     state.selectionRoot = rootOfEditor && rootOfEditor.nodeType === 11 ? rootOfEditor : (startRoot.ownerDocument || document);
     state.direction = getSelectionDirection(selection);
 
-    console.log('[LinkedIn Text Formatter] Valid selection captured.');
+    debugLog('[LinkedIn Text Formatter] Valid selection captured.');
 
     if (rangeChanged) {
       isCurrentlyValid = true;

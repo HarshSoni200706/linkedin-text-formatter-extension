@@ -56,7 +56,7 @@
     }
 
     if (typeof SelectionManager.hasValidSelection === 'function' && !SelectionManager.hasValidSelection()) {
-      console.log('[LinkedIn Text Formatter] Saved range validation result: failed (Selection invalid or stale)');
+      debugLog('[LinkedIn Text Formatter] Saved range validation result: failed (Selection invalid or stale)');
       return null;
     }
 
@@ -64,25 +64,25 @@
     const editor = typeof SelectionManager.getSavedEditor === 'function' ? SelectionManager.getSavedEditor() : null;
 
     if (!savedRange || !editor) {
-      console.log('[LinkedIn Text Formatter] Saved range validation result: failed (No saved range or editor)');
+      debugLog('[LinkedIn Text Formatter] Saved range validation result: failed (No saved range or editor)');
       return null;
     }
 
     const isConnected = typeof editor.isConnected === 'boolean' ? editor.isConnected : true;
     if (!isConnected) {
-      console.log('[LinkedIn Text Formatter] Saved range validation result: failed (Editor disconnected)');
+      debugLog('[LinkedIn Text Formatter] Saved range validation result: failed (Editor disconnected)');
       return null;
     }
 
     const root = editor.getRootNode ? editor.getRootNode() : null;
     if (root && root.nodeType === 11) {
       if (!root.host || (typeof root.host.isConnected === 'boolean' && !root.host.isConnected)) {
-        console.log('[LinkedIn Text Formatter] Saved range validation result: failed (Shadow host disconnected)');
+        debugLog('[LinkedIn Text Formatter] Saved range validation result: failed (Shadow host disconnected)');
         return null;
       }
     }
 
-    console.log('[LinkedIn Text Formatter] Saved range validation result: passed');
+    debugLog('[LinkedIn Text Formatter] Saved range validation result: passed');
     return { savedRange, editor };
   }
 
@@ -157,7 +157,7 @@
     } catch (err) {
       console.error('[LinkedIn Text Formatter] Error dispatching editor input event:', err);
     }
-    console.log('[LinkedIn Text Formatter] Input event dispatched');
+    debugLog('[LinkedIn Text Formatter] Input event dispatched');
   }
 
   /**
@@ -168,7 +168,7 @@
       const ownerDocument = editor.ownerDocument || document;
       const selection = getSelectionFromRoot(editor);
       if (!selection) {
-        console.log('[LinkedIn Text Formatter] Caret placement result: failure (no selection)');
+        debugLog('[LinkedIn Text Formatter] Caret placement result: failure (no selection)');
         return false;
       }
 
@@ -191,10 +191,10 @@
       if (editor && typeof editor.focus === 'function') {
         editor.focus();
       }
-      console.log('[LinkedIn Text Formatter] Caret placement result: success');
+      debugLog('[LinkedIn Text Formatter] Caret placement result: success');
       return true;
     } catch (err) {
-      console.log('[LinkedIn Text Formatter] Caret placement result: failure');
+      debugLog('[LinkedIn Text Formatter] Caret placement result: failure');
       return false;
     }
   }
@@ -210,7 +210,7 @@
 
       const sel = getSelectionFromRoot(editor);
       if (!sel) {
-        console.log('[LinkedIn Text Formatter] Selection restoration result: failure (No selection object)');
+        debugLog('[LinkedIn Text Formatter] Selection restoration result: failure (No selection object)');
         return false;
       }
 
@@ -220,14 +220,14 @@
 
       const rangeCount = typeof sel.rangeCount === 'number' ? sel.rangeCount : 1;
       if (rangeCount === 0) {
-        console.log('[LinkedIn Text Formatter] Selection restoration result: failure (rangeCount is 0)');
+        debugLog('[LinkedIn Text Formatter] Selection restoration result: failure (rangeCount is 0)');
         return false;
       }
 
-      console.log('[LinkedIn Text Formatter] Selection restoration result: success');
+      debugLog('[LinkedIn Text Formatter] Selection restoration result: success');
       return true;
     } catch (err) {
-      console.log('[LinkedIn Text Formatter] Selection restoration result: failure (exception)');
+      debugLog('[LinkedIn Text Formatter] Selection restoration result: failure (exception)');
       return false;
     }
   }
@@ -236,7 +236,7 @@
    * DOM Range replacement fallback for Shadow DOM or failed execCommand.
    */
   function replaceSavedSelectionDOM(savedRange, editor, formattedText) {
-    console.log('[LinkedIn Text Formatter] DOM fallback started');
+    debugLog('[LinkedIn Text Formatter] DOM fallback started');
     let originalFragment = null;
     const ownerDocument = editor.ownerDocument || document;
 
@@ -256,15 +256,15 @@
       placeCaretAfterInsertedContent(editor, textNode);
       dispatchEditorInput(editor, formattedText);
 
-      console.log('[LinkedIn Text Formatter] DOM fallback succeeded');
+      debugLog('[LinkedIn Text Formatter] DOM fallback succeeded');
       return true;
     } catch (err) {
       console.error('[LinkedIn Text Formatter] DOM replacement failed:', err);
-      console.log('[LinkedIn Text Formatter] DOM fallback failed');
+      debugLog('[LinkedIn Text Formatter] DOM fallback failed');
       if (originalFragment) {
         try {
           savedRange.insertNode(originalFragment);
-          console.log('[LinkedIn Text Formatter] Rollback restored original fragment');
+          debugLog('[LinkedIn Text Formatter] Rollback restored original fragment');
         } catch (rollbackErr) {
           console.error('[LinkedIn Text Formatter] Rollback failed:', rollbackErr);
         }
@@ -283,7 +283,7 @@
     // 1. Restore root-local selection context
     const restored = restoreSelectionContext(editor, savedRange);
     if (!restored) {
-      console.log('[LinkedIn Text Formatter] Replacement transaction aborted: selection restoration failed');
+      debugLog('[LinkedIn Text Formatter] Replacement transaction aborted: selection restoration failed');
       return false;
     }
 
@@ -299,7 +299,7 @@
       execSuccess = false;
     }
 
-    console.log(`[LinkedIn Text Formatter] execCommand return value: ${execSuccess}`);
+    debugLog(`[LinkedIn Text Formatter] execCommand return value: ${execSuccess}`);
 
     // 3. Verify DOM actually changed after execCommand
     let domChanged = false;
@@ -312,19 +312,19 @@
     }
 
     if (execSuccess && domChanged) {
-      console.log(`[LinkedIn Text Formatter] Replacement strategy selected: ${strategy}`);
-      console.log('[LinkedIn Text Formatter] Replacement success');
+      debugLog(`[LinkedIn Text Formatter] Replacement strategy selected: ${strategy}`);
+      debugLog('[LinkedIn Text Formatter] Replacement success');
       dispatchEditorInput(editor, formattedText);
       placeCaretAfterInsertedContent(editor, savedRange);
       return true;
     }
 
     if (execSuccess && !domChanged) {
-      console.log('[LinkedIn Text Formatter] execCommand reported true but DOM remained unchanged. Triggering DOM fallback.');
+      debugLog('[LinkedIn Text Formatter] execCommand reported true but DOM remained unchanged. Triggering DOM fallback.');
     }
 
     // 4. Trigger DOM Range fallback if execCommand returned false or failed DOM verification
-    console.log('[LinkedIn Text Formatter] Replacement strategy selected: DOM Range Fallback');
+    debugLog('[LinkedIn Text Formatter] Replacement strategy selected: DOM Range Fallback');
     const fallbackSuccess = replaceSavedSelectionDOM(savedRange, editor, formattedText);
     return fallbackSuccess;
   }
@@ -352,9 +352,9 @@
    * Applies requested format style to active saved selection.
    */
   function applyFormatting(style) {
-    console.log(`[LinkedIn Text Formatter] applyFormatting entered for style: ${style}`);
+    debugLog(`[LinkedIn Text Formatter] applyFormatting entered for style: ${style}`);
     if (isTransactionRunning) {
-      console.log('[LinkedIn Text Formatter] Formatting action ignored: Transaction already running.');
+      debugLog('[LinkedIn Text Formatter] Formatting action ignored: Transaction already running.');
       return false;
     }
 
@@ -368,17 +368,17 @@
     try {
       // 1. Validate style identifier
       if (!SUPPORTED_STYLES.has(style)) {
-        console.log(`[LinkedIn Text Formatter] Formatting action failed: Unsupported style identifier "${style}".`);
+        debugLog(`[LinkedIn Text Formatter] Formatting action failed: Unsupported style identifier "${style}".`);
         return false;
       }
 
       // 2. Validate selection context
       const context = validateReplacementContext();
       if (!context) {
-        console.log('[LinkedIn Text Formatter] Context validation failure');
+        debugLog('[LinkedIn Text Formatter] Context validation failure');
         return false;
       }
-      console.log('[LinkedIn Text Formatter] Context validation success');
+      debugLog('[LinkedIn Text Formatter] Context validation success');
 
       const { savedRange, editor } = context;
       savedEditor = editor;
@@ -386,16 +386,16 @@
       // Log root & selection source types
       const root = editor.getRootNode ? editor.getRootNode() : null;
       const isShadow = root && root.nodeType === 11;
-      console.log(`[LinkedIn Text Formatter] Saved editor root type: ${isShadow ? 'shadow-root' : 'document'}`);
-      console.log(`[LinkedIn Text Formatter] Selection source type: ${isShadow ? 'ShadowRoot.getSelection' : 'Document.getSelection'}`);
+      debugLog(`[LinkedIn Text Formatter] Saved editor root type: ${isShadow ? 'shadow-root' : 'document'}`);
+      debugLog(`[LinkedIn Text Formatter] Selection source type: ${isShadow ? 'ShadowRoot.getSelection' : 'Document.getSelection'}`);
 
       // 3. Dynamically resolve formatter at action time
       const formatText = resolveFormatter();
       if (typeof formatText !== 'function') {
-        console.log('[LinkedIn Text Formatter] Formatting action failed: formatText engine function unavailable.');
+        debugLog('[LinkedIn Text Formatter] Formatting action failed: formatText engine function unavailable.');
         return false;
       }
-      console.log('[LinkedIn Text Formatter] Formatter resolved');
+      debugLog('[LinkedIn Text Formatter] Formatter resolved');
 
       // 4. Begin protected interaction
       if (SelectionManager && typeof SelectionManager.beginProtectedInteraction === 'function') {
@@ -405,14 +405,14 @@
       // 5. Read selected text
       const selectedText = savedRange.toString();
       if (!selectedText || selectedText.trim() === '') {
-        console.log('[LinkedIn Text Formatter] Formatting action failed: Selected content is empty or whitespace-only.');
+        debugLog('[LinkedIn Text Formatter] Formatting action failed: Selected content is empty or whitespace-only.');
         return false;
       }
-      console.log(`[LinkedIn Text Formatter] Selected character count: ${selectedText.length}`);
+      debugLog(`[LinkedIn Text Formatter] Selected character count: ${selectedText.length}`);
 
       // 6. Check for atomic protected non-editable entities and plain-text URLs
       if (containsProtectedEntity(savedRange, editor)) {
-        console.log('[LinkedIn Text Formatter] Selection rejected: protected content');
+        debugLog('[LinkedIn Text Formatter] Selection rejected: protected content');
         if (SelectionManager && typeof SelectionManager.clearSelection === 'function') {
           SelectionManager.clearSelection();
         }
@@ -425,10 +425,10 @@
       // 7. Format text using formatting engine
       const formattedText = formatText(selectedText, style);
       if (typeof formattedText !== 'string') {
-        console.log('[LinkedIn Text Formatter] Formatting action failed: Invalid formatter output.');
+        debugLog('[LinkedIn Text Formatter] Formatting action failed: Invalid formatter output.');
         return false;
       }
-      console.log(`[LinkedIn Text Formatter] Formatted character count: ${formattedText.length}`);
+      debugLog(`[LinkedIn Text Formatter] Formatted character count: ${formattedText.length}`);
 
       // 8. Perform text replacement transaction
       transactionSuccess = replaceSavedSelection(formattedText, editor, savedRange);
@@ -436,15 +436,15 @@
       // 9. DOM verification check after transaction
       const isEditorConnected = typeof editor.isConnected === 'boolean' ? editor.isConnected : true;
       if (transactionSuccess && isEditorConnected) {
-        console.log('[LinkedIn Text Formatter] Final DOM verification result: success');
+        debugLog('[LinkedIn Text Formatter] Final DOM verification result: success');
       } else {
-        console.log('[LinkedIn Text Formatter] Final DOM verification result: failure');
+        debugLog('[LinkedIn Text Formatter] Final DOM verification result: failure');
         transactionSuccess = false;
       }
 
       // 10. Hide toolbar & clear selection ONLY after verified success
       if (transactionSuccess) {
-        console.log(`[LinkedIn Text Formatter] Formatting action succeeded: ${style}`);
+        debugLog(`[LinkedIn Text Formatter] Formatting action succeeded: ${style}`);
         if (SelectionManager && typeof SelectionManager.clearSelection === 'function') {
           SelectionManager.clearSelection();
         }
@@ -453,7 +453,7 @@
         }
         return true;
       } else {
-        console.log('[LinkedIn Text Formatter] Formatting action failed during replacement transaction.');
+        debugLog('[LinkedIn Text Formatter] Formatting action failed during replacement transaction.');
         return false;
       }
     } catch (err) {
@@ -477,12 +477,12 @@
    */
   function initialize() {
     const fmt = resolveFormatter();
-    console.log(`[LinkedIn Text Formatter] Formatter availability: ${fmt ? 'available' : 'unavailable'}`);
-    console.log('[LinkedIn Text Formatter] Text replacement manager initialized.');
+    debugLog(`[LinkedIn Text Formatter] Formatter availability: ${fmt ? 'available' : 'unavailable'}`);
+    debugLog('[LinkedIn Text Formatter] Text replacement manager initialized.');
     const ToolbarManager = window.LinkedInTextFormatter.ToolbarManager;
     if (ToolbarManager && typeof ToolbarManager.onFormatAction === 'function') {
       ToolbarManager.onFormatAction((actionStyle) => {
-        console.log(`[LinkedIn Text Formatter] Toolbar action received: ${actionStyle}`);
+        debugLog(`[LinkedIn Text Formatter] Toolbar action received: ${actionStyle}`);
         applyFormatting(actionStyle);
       });
     }

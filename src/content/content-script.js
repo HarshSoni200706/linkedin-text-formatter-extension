@@ -18,15 +18,15 @@
   function debugLog(...args) { if (DEBUG) console.log(...args); }
 
   const currentPath = typeof window !== 'undefined' && window.location ? window.location.pathname : '';
-  console.log(`[LinkedIn Text Formatter] Initialized: ${currentPath}`);
+  debugLog(`[LinkedIn Text Formatter] Initialized: ${currentPath}`);
 
-  console.log('[LinkedIn Text Formatter] Editor detector initialized.');
+  debugLog('[LinkedIn Text Formatter] Editor detector initialized.');
   if (window.LinkedInTextFormatter.SelectionManager) {
-    console.log('[LinkedIn Text Formatter] Selection manager initialized.');
+    debugLog('[LinkedIn Text Formatter] Selection manager initialized.');
   }
   if (window.LinkedInTextFormatter.ToolbarManager) {
     window.LinkedInTextFormatter.ToolbarManager.initialize();
-    console.log('[LinkedIn Text Formatter] Toolbar manager initialized.');
+    debugLog('[LinkedIn Text Formatter] Toolbar manager initialized.');
   }
   if (window.LinkedInTextFormatter.TextReplacementManager) {
     window.LinkedInTextFormatter.TextReplacementManager.initialize();

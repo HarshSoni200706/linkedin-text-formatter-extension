@@ -1,188 +1,249 @@
 # LinkedIn Text Formatter Extension
 
-A lightweight Chrome Extension that enables users to highlight text directly inside LinkedIn's post editor and convert it into styled Unicode text (Bold, Italic, Bold Italic, Underline, and Double Underline).
+LinkedIn Text Formatter is a lightweight Chrome extension that lets users format selected text in LinkedIn's Create a Post editor as Bold, Italic, Bold Italic, Underline or Double Underline using Unicode characters.
 
 ---
 
-## Problem Statement
+## Project Status
 
-LinkedIn's post editor does not provide native rich text formatting (bolding, italics, or underlining) for normal posts. Users who want to emphasize headings, bullet points, or key takeaways are often forced to use external third-party converter websites, copy text back and forth, and re-format manually—breaking their writing workflow.
-
-## Proposed Solution
-
-The **LinkedIn Text Formatter Extension** inserts an inline floating toolbar whenever text is highlighted inside LinkedIn's post creation modal. Users can convert selected text to five distinct Unicode formatting styles with a single click or keyboard shortcut, completely locally and seamlessly within their workflow.
-
----
-
-## MVP Features
-
-- **Direct LinkedIn Integration:** Works directly within LinkedIn's post creation modal (supports direct-document and open Shadow DOM composers).
-- **Five Supported Text Styles:**
-  - **Bold** (`𝐁𝐨𝐥𝐝`)
-  - *Italic* (`𝐼𝑡𝑎𝑙𝑖𝑐`)
-  - ***Bold Italic*** (`𝑩𝒐𝒍𝒅 𝑰𝒕𝒂𝒍𝒊𝒄`)
-  - <u>Underline</u> (`U̲n̲d̲e̲r̲l̲i̲n̲e̲`)
-  - <u>̲Double Underline</u> (`D̳o̳u̳b̳l̳e̳ ̳U̳n̳d̳e̳r̳l̳i̳n̳e̳`)
-- **Inline Floating Toolbar:** Appears positioned near selected text with minimal disruption.
-- **Full Keyboard & Mouse Support:** Accessible toolbar buttons with explicit aria-labels, focus indicators, and Escape key dismissal.
-- **Extension Popup:** Accessible toolbar popup providing usage instructions, style previews, Unicode accessibility guidance, privacy guarantee, supported scope notice, and link to GitHub repository.
-- **Local Processing:** 100% client-side text conversion with zero data transmission or tracking.
+- **Version:** 0.1.0 (Manifest V3)
+- **Current Phase:** Phase 13 — Documentation ([~] In Progress)
+- **Automated Test Coverage:** 10 zero-dependency Node test suites passing (440+ tests, 0 failures)
+- **Chrome Web Store Status:** Unpacked developer extension (not currently published on the Chrome Web Store)
 
 ---
 
-## Technology Stack
+## Problem Being Solved
 
-- **Extension Specification:** Chrome Extension Manifest V3
-- **Programming Language:** JavaScript (ES6+)
-- **Markup & Styling:** HTML5, Vanilla CSS
-- **Frameworks / Libraries:** None (Framework-free, lightweight)
-- **Backend / Database / APIs:** None
+LinkedIn's native post composer does not provide built-in formatting controls for bold, italic, or underlined text. Previously, users who wanted to add visual hierarchy or emphasis to their LinkedIn posts had to follow a tedious workflow:
 
----
+1. Leave LinkedIn and open an external font generator website.
+2. Type or paste text into the external site.
+3. Copy the converted Unicode output.
+4. Return to LinkedIn.
+5. Paste the text back into the post composer.
 
-## Permissions & Scope
-
-To maintain security, privacy, and performance, this extension follows the principle of least privilege:
-- **No requested permissions:** Does not require broad permissions like `storage`, `activeTab`, or `<all_urls>`.
-- **Domain Restricted:** The content script is restricted strictly to matching URL patterns on LinkedIn (`https://www.linkedin.com/*`). It cannot run or access any other websites.
+The LinkedIn Text Formatter extension eliminates this friction by keeping the entire formatting workflow **directly inside LinkedIn's post composer**.
 
 ---
 
-## Supported LinkedIn Editor Scope
+## How the Extension Works
 
-> [!NOTE]
-> **Version 1 Scope Notice:** This extension is designed specifically for LinkedIn's **Create a Post** composer (supporting both direct-document and open Shadow DOM modal variations). 
-> 
-> Comments, direct messaging, search boxes, group posts, and pulse article editors are **not** currently supported in Version 1. The extension silently ignores text selections in unsupported fields to prevent disruption to standard LinkedIn usage.
+The extension injects a lightweight content script into `https://www.linkedin.com/*`. When you highlight plain text inside LinkedIn's supported post editor, a floating contextual toolbar appears near your selection. Clicking any style button instantly converts the selected ASCII characters into equivalent Unicode mathematical alphanumeric symbols locally in memory.
+
+*Note:* This extension performs **Unicode character conversion**, not native HTML rich-text formatting (`<b>`, `<i>`). The converted characters are standard UTF-8 Unicode glyphs that persist wherever plain text is supported.
 
 ---
 
-## Interaction Workflows
+## Features
+
+- **Contextual Floating Toolbar:** Appears automatically near valid text selections inside the post editor.
+- **Five Formatting Styles:** Bold, Italic, Bold Italic, Underline, and Double Underline.
+- **Dual Composer Support:** Operates seamlessly across standard direct-document post editors and open Shadow DOM Quill editors (`DIV.ql-editor` inside `DIV#interop-outlet`).
+- **Entity Protection (QA-001):** Rejects selections overlapping links (`a[href]`), mentions (`@name`), protected rich nodes, and plain-text URLs (`https://...`) to prevent corrupting LinkedIn link entities.
+- **100% Local & Private:** Text conversion is performed in-memory inside your browser tab. Zero network requests, zero data collection, zero tracking.
+- **Keyboard & Accessibility Support:** Keyboard activation via Enter/Space, Escape dismissal, visible focus indicators, dark mode support, and reduced-motion preferences.
+- **Information Popup:** Provides quick reference guide, style previews, version badge, and privacy guarantees.
+
+---
+
+## Supported Formatting Styles
+
+The extension supports 5 verified formatting styles. All examples below are produced directly by the formatter engine:
+
+| Style | Label | Example Output | Unicode Block / Mechanism |
+|---|---|---|---|
+| **Bold** | `B` | 𝐁𝐨𝐥𝐝 | Mathematical Bold (`U+1D400`–`U+1D433`, `U+1D7CE`–`U+1D7D7`) |
+| **Italic** | `I` | 𝐼𝑡𝑎𝑙𝑖𝑐 | Mathematical Italic (`U+1D434`–`U+1D467`, `U+1D455` for 'h') |
+| **Bold Italic** | `BI` | 𝑩𝒐𝒍𝒅 𝑰𝒕𝒂𝒍𝒊𝒄 | Mathematical Bold Italic (`U+1D468`–`U+1D49B`) |
+| **Underline** | `U` | U̲n̲d̲e̲r̲l̲i̲n̲e̲ | Combining Low Line (`U+0332`) |
+| **Double Underline** | `U=` | D̳o̳u̳b̳l̳e̳ ̳U̳n̳d̳e̳r̳l̳i̳n̲e̲ | Combining Double Low Line (`U+0333`) |
+
+---
+
+## Supported LinkedIn Scope
+
+The extension is strictly scoped to **LinkedIn's Create a Post editor** on `https://www.linkedin.com/*`:
+
+- **Supported:** Direct-document post composer (`/sharing/compose`, main feed modal) and open Shadow DOM post editor (`DIV.ql-editor`).
+- **Unsupported & Excluded:** LinkedIn Comments, Messaging, Article / Newsletter editor (`/pulse/`), Search input boxes, CAPTCHAs, and mobile web browsers.
+
+---
+
+## Installation in Developer Mode
+
+To install the extension for local testing or development:
+
+1. Clone the repository to your local machine:
+   ```bash
+   git clone https://github.com/HarshSoni200706/linkedin-text-formatter-extension.git
+   cd linkedin-text-formatter-extension
+   ```
+2. Open Google Chrome and navigate to `chrome://extensions/`.
+3. Enable **Developer mode** using the toggle switch in the top-right corner.
+4. Click the **Load unpacked** button.
+5. Select the repository root folder containing `manifest.json`.
+6. (Optional) Pin the extension icon to your Chrome toolbar for quick access to the information popup.
+7. Open or refresh `https://www.linkedin.com`.
+
+---
+
+## Usage Instructions
+
+### General Usage
+1. Open LinkedIn and click **Start a post**.
+2. Type your post content in the composer.
+3. Highlight the plain text you want to format.
+4. The floating formatting toolbar will appear above your selection.
+5. Click your desired formatting style (`B`, `I`, `BI`, `U`, `U=`).
+6. The selected text is converted locally. Continue typing or publish your post.
 
 ### Mouse Workflow
-1. Highlight text inside LinkedIn's Create a Post editor using mouse drag or double/triple click.
-2. The inline floating toolbar appears directly above (or below) the selection.
-3. Click any of the 5 formatting buttons.
-4. The text is transformed instantly, focus returns to the editor, and the caret is placed after the inserted formatted text.
+- Highlight text with your mouse cursor inside the post composer.
+- Click any formatting button on the floating toolbar.
+- Click outside the toolbar or selection to dismiss it.
 
 ### Keyboard Workflow
-1. Highlight text inside LinkedIn's Create a Post editor using `Shift + Arrow keys` or `Ctrl + A`.
-2. Press `Tab` to shift focus into the floating formatting toolbar.
-3. Use `Tab` / `Shift + Tab` to move between formatting buttons (focus ring is clearly visible in both light and dark themes).
-4. Press `Enter` or `Space` to activate the chosen formatting style.
-5. Press `Escape` at any time to dismiss the toolbar without altering selected text or corrupting the editor.
+- Highlight text using standard keyboard selection (`Shift + Arrow Keys`).
+- Press `Tab` to shift focus onto the floating toolbar buttons.
+- Press `Enter` or `Space` to activate the focused formatting style.
+- Press `Escape` at any time to dismiss the floating toolbar.
 
 ---
 
-## Installation & Developer Mode Testing
+## Screenshots
 
-To load the extension manually into Google Chrome for testing:
+### Floating Formatting Toolbar
 
-1. Open **Google Chrome** and navigate to `chrome://extensions/`.
-2. Enable **Developer mode** using the toggle in the top-right corner.
-3. Click the **Load unpacked** button in the top-left.
-4. Select the `linkedin-text-formatter-extension` folder.
-5. Confirm that the extension appears in the list without any manifest or syntax errors.
+![Floating formatting toolbar appearing above highlighted text selection in LinkedIn post composer](assets/screenshots/toolbar-selection.png)
 
----
+### Formatting Result
 
-## User Experience, Accessibility & Privacy (Phase 10 Audit)
+![Selected text converted to Mathematical Bold style inside LinkedIn post editor](assets/screenshots/bold-result.png)
 
-### Accessible Button Naming & Focus Indicators
-- Every toolbar button is a semantic `<button type="button">` with descriptive accessible names:
-  - `Format selected text as Bold`
-  - `Format selected text as Italic`
-  - `Format selected text as Bold Italic`
-  - `Format selected text as Underline`
-  - `Format selected text as Double Underline`
-- High-contrast `:focus-visible` outline rings are implemented for both Light (`#0a66c2`) and Dark (`#70b5f9`) appearance themes.
-- Contrast ratios pass WCAG AA requirements across all text elements (4.5:1 for normal text, 3:1 for UI focus rings).
+### Extension Popup
 
-### Reduced-Motion Support
-- Respects system preferences via `@media (prefers-reduced-motion: reduce)`.
-- Transitions, transforms, and animations are disabled for users with reduced motion preferences.
+> [!NOTE]
+> Extension information popup showing usage steps, style previews, version badge `v0.1.0`, and privacy guarantee.
 
-### Privacy Audit & Zero Data Transmission
-- **100% Local Processing:** Your text is processed locally in your browser. It is not uploaded, stored, or sent to a server.
-- Zero analytics, tracking scripts, external fonts, remote resources, or network calls.
-- Debug logging is disabled by default (`DEBUG = false`), ensuring clean production execution without user text logging.
+### Dark Appearance
 
----
+> [!NOTE]
+> Contextual floating toolbar and extension popup adapt automatically to system dark mode via `prefers-color-scheme: dark`.
 
-## Important Unicode Accessibility Limitation
+### Supported LinkedIn Composer Layouts
 
-> [!WARNING]
-> **Accessibility Notice:** Styled text generated by this extension uses mathematical and stylized Unicode code points rather than semantic HTML (`<b>`, `<i>`) or CSS styles. Some screen readers (used by visually impaired users) may read Unicode formatted text character-by-character, pronounce mathematical symbol names, or skip them entirely. 
-> 
-> **Best Practice:** Use Unicode styling sparingly—primarily for short headings, single keywords, or key emphasis—and avoid converting entire paragraphs.
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <strong>Direct-Document Composer (Layout A)</strong><br><br>
+      <img src="assets/screenshots/layout-a-direct.png" alt="Direct-document LinkedIn Create a Post editor Layout A with active text selection" />
+    </td>
+    <td width="50%" align="center">
+      <strong>Open Shadow DOM Composer (Layout B)</strong><br><br>
+      <img src="assets/screenshots/layout-b-shadow.png" alt="Open Shadow DOM LinkedIn post editor Layout B inside interop-outlet with active text selection" />
+    </td>
+  </tr>
+</table>
 
 ---
 
 ## Project Structure
 
-```text
+```
 linkedin-text-formatter-extension/
-│
-├── manifest.json
-├── README.md
-├── LICENSE
-├── .gitignore
-├── tasks.md
-│
-├── src/
-│   ├── content/
-│   │   ├── content-script.js
-│   │   ├── selection-manager.js
-│   │   ├── editor-manager.js
-│   │   ├── toolbar-manager.js
-│   │   └── text-replacement-manager.js
-│   │
-│   ├── formatter/
-│   │   ├── unicode-maps.js
-│   │   ├── text-formatter.js
-│   │   └── text-normalizer.js
-│   │
-│   ├── popup/
-│   │   ├── popup.html
-│   │   ├── popup.css
-│   │   └── popup.js
-│   │
-│   ├── styles/
-│   │   └── content-toolbar.css
-│   │
-│   └── shared/
-│       ├── constants.js
-│       └── utilities.js
-│
 ├── assets/
 │   ├── icons/
 │   │   ├── icon-16.png
 │   │   ├── icon-32.png
 │   │   ├── icon-48.png
 │   │   └── icon-128.png
-│   │
 │   └── screenshots/
-│
-└── tests/
-    ├── formatter.test.js
-    ├── editor-detector.test.js
-    ├── selection-manager.test.js
-    ├── toolbar-manager.test.js
-    ├── text-replacement-manager.test.js
-    ├── popup.test.js
-    ├── ux-accessibility.test.js
-    ├── runner.html
-    └── test-cases.md
+│       └── README.md
+├── docs/
+│   ├── development/
+│   │   ├── linkedin-editor-detection.md
+│   │   └── updating-unicode-mappings.md
+│   ├── qa/
+│   │   └── phase-11-test-report.md
+│   ├── release/
+│   │   └── packaging.md
+│   ├── security/
+│   │   └── phase-12-security-review.md
+│   └── testing/
+│       └── manual-testing-checklist.md
+├── src/
+│   ├── content/
+│   │   ├── content-script.js
+│   │   ├── editor-manager.js
+│   │   ├── selection-manager.js
+│   │   ├── text-replacement-manager.js
+│   │   └── toolbar-manager.js
+│   ├── formatter/
+│   │   ├── text-formatter.js
+│   │   ├── text-normalizer.js
+│   │   └── unicode-maps.js
+│   ├── popup/
+│   │   ├── popup.css
+│   │   ├── popup.html
+│   │   └── popup.js
+│   ├── shared/
+│   │   ├── constants.js
+│   │   └── utilities.js
+│   └── styles/
+│       └── content-toolbar.css
+├── tests/
+│   ├── editor-detector.test.js
+│   ├── formatter.test.js
+│   ├── popup.test.js
+│   ├── quality-assurance.test.js
+│   ├── security-privacy.test.js
+│   ├── selection-manager.test.js
+│   ├── text-replacement-manager.test.js
+│   ├── toolbar-manager.test.js
+│   ├── ux-accessibility.test.js
+│   └── runner.html
+├── CHANGELOG.md
+├── CONTRIBUTING.md
+├── LICENSE
+├── PRIVACY.md
+├── README.md
+├── manifest.json
+└── tasks.md
 ```
 
 ---
 
-## Running Automated Test Suites
+## Technology Stack
 
-The extension contains **212 zero-dependency unit tests** across 7 test suites.
+- **Extension Platform:** Chrome Extension Manifest V3
+- **Languages:** Plain JavaScript (ES6+), HTML5, Vanilla CSS3
+- **Character Standard:** Unicode Mathematical Alphanumeric Symbols & Combining Diacritical Marks
+- **APIs:** Browser Selection & Range APIs, DOM Traversal & Mutation APIs, Chrome Extension Runtime API
+- **Interoperability:** Open Shadow DOM resolution via `event.composedPath()` and `getRootNode()`
+- **Testing Environment:** Zero-dependency Node.js unit test suites
 
-To run all automated tests in Terminal using Node.js:
+---
+
+## Architecture Overview
+
+The extension uses a modular, decoupled architecture:
+
+- **`EditorManager` (`editor-manager.js`):** Scored multi-signal detector identifying supported post editors across direct-document (Layout A) and open Shadow DOM (Layout B) containers while enforcing exclusions.
+- **`SelectionManager` (`selection-manager.js`):** Listens for selection events, validates boundaries, enforces protected entity/URL checks (QA-001), and maintains temporary selection ranges.
+- **`ToolbarManager` (`toolbar-manager.js`):** Manages a single canonical floating toolbar element, handles host reparenting across DOM/Shadow DOM nodes, clamping, and visibility state.
+- **`TextReplacementManager` (`text-replacement-manager.js`):** Executes text formatting transactions via selection deletion and node insertion with DOM fallback and rollback safety.
+- **`Formatter Engine` (`text-formatter.js`, `unicode-maps.js`, `text-normalizer.js`):** Pure in-memory transformation pipeline converting ASCII strings to Unicode mathematical character representations.
+- **`Popup` (`popup.html`, `popup.js`, `popup.css`):** Standalone extension interface showing usage instructions, style previews, and metadata.
+
+---
+
+## Running Automated Tests
+
+The repository includes zero-dependency Node test suites:
+
 ```bash
+# Run individual test suites
 node tests/formatter.test.js
 node tests/editor-detector.test.js
 node tests/selection-manager.test.js
@@ -190,17 +251,105 @@ node tests/toolbar-manager.test.js
 node tests/text-replacement-manager.test.js
 node tests/popup.test.js
 node tests/ux-accessibility.test.js
+node tests/quality-assurance.test.js
+node tests/security-privacy.test.js
+
+# Run all test suites in sequence
+for suite in tests/*.test.js; do node "$suite"; done
 ```
 
 ---
 
-## Current Development Status
+## Manual Testing
 
-* **Active Phase:** Phase 10 — User Experience and Accessibility (Implementation complete, 212 Node unit tests passing across 7 test suites, pending manual browser accessibility and zoom verification).
-* **Next Phase:** Phase 11 — Testing and Quality Assurance.
+For comprehensive manual quality assurance instructions across supported LinkedIn editor layouts, refer to:
+
+- [docs/testing/manual-testing-checklist.md](docs/testing/manual-testing-checklist.md)
+- [docs/qa/phase-11-test-report.md](docs/qa/phase-11-test-report.md)
+
+---
+
+## Privacy
+
+**Your text stays in your browser.** The LinkedIn Text Formatter extension processes all text locally on your device using only in-memory Unicode character mapping.
+
+- **Zero Data Upload:** Selected text is never sent to external servers or remote endpoints.
+- **Zero Persistent Storage:** The extension does not write to Chrome Storage, `localStorage`, `sessionStorage`, IndexedDB, or cookies.
+- **Zero Telemetry:** No analytics libraries, error trackers, or tracking pixels are included.
+- **Zero Clipboard Access:** The extension does not read or write the system clipboard.
+- **No Account Access:** The extension does not read or collect LinkedIn account details or session tokens.
+
+Read the complete [PRIVACY.md](PRIVACY.md) policy for full disclosures.
+
+---
+
+## Security
+
+- **Least Privilege:** Declares **zero permissions** (`permissions: []`) in `manifest.json`.
+- **Restricted Host Access:** Content scripts run strictly on `https://www.linkedin.com/*`.
+- **Safe DOM Operations:** All DOM element creation uses safe methods (`createElement`, `textContent`, `setAttribute`). `innerHTML` and `eval` are strictly forbidden.
+- **Local Assets Only:** All JavaScript, CSS, and HTML files are bundled locally inside the extension. No remote code or CDN dependencies are loaded.
+- **Production Logging Silenced:** Production code keeps `DEBUG = false` to prevent emitting internal state to the browser console.
+
+Review the complete security audit in [docs/security/phase-12-security-review.md](docs/security/phase-12-security-review.md).
+
+---
+
+## Accessibility
+
+> [!WARNING]
+> **Screen Reader Notice:**
+> Styled text uses Unicode mathematical characters rather than native HTML formatting (`<b>`, `<i>`). Some screen readers may read mathematical Unicode characters as individual symbol names (e.g. "Mathematical Bold Capital B") rather than normal words. Use formatted text primarily for headings, titles, and short emphasis phrases.
+
+- **Keyboard Control:** Floating toolbar buttons support keyboard focus (`Tab`) and activation (`Enter` / `Space`).
+- **Dismissal:** Pressing `Escape` hides the floating toolbar immediately.
+- **Visual Design:** High contrast button styles with visible focus indicators (`outline: 2px solid #0a66c2`).
+- **Reduced Motion:** Respects `prefers-reduced-motion: reduce` by disabling non-essential transitions.
+
+---
+
+## Known Limitations
+
+- **Supported Scope:** Operates exclusively inside LinkedIn's Create a Post editor. Comments, messaging, articles, search fields, and mobile web browsers are not supported.
+- **Protected Entities:** Links, mentions (`@name`), protected elements, and plain-text URLs (`https://...`) are intentionally rejected to prevent corrupting LinkedIn entity structures.
+- **Accessibility:** Screen readers treat Unicode mathematical characters differently from plain ASCII text.
+- **Character Coverage:** Non-Latin character sets (such as Cyrillic, CJK, or Arabic) are preserved as plain unformatted characters.
+- **LinkedIn DOM Evolution:** Structural updates by LinkedIn may require periodic editor detection maintenance.
+
+---
+
+## Development Roadmap
+
+### Version 0.1 (Current)
+- Stable 5-style Unicode formatting engine
+- Dual layout support (Direct-document and open Shadow DOM)
+- Entity and URL protection (QA-001)
+- Zero-permission security and privacy architecture
+
+### Future Possibilities (Post-V1)
+- Optional user settings popup
+- Additional Unicode styling variants (e.g. Script, Monospace)
+- Extended editor detection for new LinkedIn composer revisions
+
+### Explicitly Out of Scope
+- Support for LinkedIn messaging or comments
+- Account synchronization or remote backend analytics
+- Native rich-text formatting export (`.docx`, `.rtf`)
+
+---
+
+## Contributing
+
+We welcome contributions! Please review our [CONTRIBUTING.md](CONTRIBUTING.md) guide for branch naming conventions, commit guidelines, coding rules, and testing instructions.
 
 ---
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the terms of the **MIT License**. See the [LICENSE](LICENSE) file for complete license text.
+
+---
+
+## Disclaimer
+
+LinkedIn Text Formatter is an independent open-source Chrome extension. This project is **not affiliated with, endorsed by, or sponsored by LinkedIn Corporation** or Microsoft Corporation. "LinkedIn" is a registered trademark of LinkedIn Corporation.

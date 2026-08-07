@@ -165,13 +165,15 @@
     window.LinkedInTextFormatter.TextFormatter = { formatText };
     window.LinkedInTextFormatter.formatText = formatText;
 
-    console.log('[LinkedIn Text Formatter] Formatter runtime initialized.', {
-      namespaceExists: !!window.LinkedInTextFormatter,
-      textFormatterExists: !!(window.LinkedInTextFormatter.TextFormatter),
-      canonicalFormatTextType: typeof (window.LinkedInTextFormatter.TextFormatter && window.LinkedInTextFormatter.TextFormatter.formatText),
-      fallbackFormatTextType: typeof window.LinkedInTextFormatter.formatText,
-      normalizeTextType: typeof window.LinkedInTextFormatter.normalizeText
-    });
+    if (typeof window.__ltfDebug !== 'undefined' && window.__ltfDebug) {
+      console.log('[LinkedIn Text Formatter] Formatter runtime initialized.', {
+        namespaceExists: !!window.LinkedInTextFormatter,
+        textFormatterExists: !!(window.LinkedInTextFormatter.TextFormatter),
+        canonicalFormatTextType: typeof (window.LinkedInTextFormatter.TextFormatter && window.LinkedInTextFormatter.TextFormatter.formatText),
+        fallbackFormatTextType: typeof window.LinkedInTextFormatter.formatText,
+        normalizeTextType: typeof window.LinkedInTextFormatter.normalizeText
+      });
+    }
   }
 
   if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
