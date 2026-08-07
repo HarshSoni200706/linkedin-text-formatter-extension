@@ -123,13 +123,12 @@ To install the extension for local testing or development:
 
 ### Extension Popup
 
-> [!NOTE]
-> Extension information popup showing usage steps, style previews, version badge `v0.1.0`, and privacy guarantee.
+![Extension information popup showing usage steps, style previews, version badge `v0.1.0`, and privacy guarantee.](assets/screenshots/extention-popup.png)
 
 ### Dark Appearance
 
-> [!NOTE]
-> Contextual floating toolbar and extension popup adapt automatically to system dark mode via `prefers-color-scheme: dark`.
+![Contextual floating toolbar and extension popup adapt automatically to system dark mode via `prefers-color-scheme: dark`.](assets/screenshots/Dark-Appearance.png)
+
 
 ### Supported LinkedIn Composer Layouts
 
