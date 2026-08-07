@@ -173,7 +173,7 @@
     if (editor) {
       const rootNode = editor.getRootNode ? editor.getRootNode() : null;
       if (rootNode && rootNode.nodeType === 11 /* DOCUMENT_FRAGMENT_NODE / ShadowRoot */ && rootNode.host) {
-        console.log('[LinkedIn Text Formatter] Toolbar host selected: shadow-root');
+        debugLog('[LinkedIn Text Formatter] Toolbar host selected: shadow-root');
         ensureShadowToolbarStyles(rootNode);
         return rootNode;
       }
@@ -181,14 +181,14 @@
       if (typeof editor.closest === 'function') {
         const activeDialog = editor.closest('dialog[open]') || editor.closest('[role="dialog"]');
         if (activeDialog) {
-          console.log('[LinkedIn Text Formatter] Toolbar host selected: dialog');
+          debugLog('[LinkedIn Text Formatter] Toolbar host selected: dialog');
           return activeDialog;
         }
       }
     }
 
     const doc = (editor && editor.ownerDocument) ? editor.ownerDocument : document;
-    console.log('[LinkedIn Text Formatter] Toolbar host selected: document');
+    debugLog('[LinkedIn Text Formatter] Toolbar host selected: document');
     return doc.body || doc.documentElement || document.body;
   }
 
@@ -220,7 +220,7 @@
     }
 
     const countInRoot = foundElements.length;
-    console.log(`[LinkedIn Text Formatter] Number of toolbar elements found in active root: ${countInRoot}`);
+    debugLog(`[LinkedIn Text Formatter] Number of toolbar elements found in active root: ${countInRoot}`);
 
     let removeCount = 0;
     foundElements.forEach(el => {
@@ -233,7 +233,7 @@
     });
 
     if (removeCount > 0) {
-      console.log(`[LinkedIn Text Formatter] Duplicate toolbar removed (removed ${removeCount}).`);
+      debugLog(`[LinkedIn Text Formatter] Duplicate toolbar removed (removed ${removeCount}).`);
     }
   }
 
@@ -348,9 +348,9 @@
       if (isConn || toolbarElement.parentNode) {
         if (toolbarElement.parentElement !== targetHost) {
           targetHost.appendChild(toolbarElement);
-          console.log('[LinkedIn Text Formatter] Canonical toolbar reparented.');
+          debugLog('[LinkedIn Text Formatter] Canonical toolbar reparented.');
         } else {
-          console.log('[LinkedIn Text Formatter] Canonical toolbar reused.');
+          debugLog('[LinkedIn Text Formatter] Canonical toolbar reused.');
         }
         cleanupDuplicateToolbars(targetHost, toolbarElement);
         return toolbarElement;
@@ -370,16 +370,16 @@
       toolbarElement = existing;
       if (toolbarElement.parentElement !== targetHost) {
         targetHost.appendChild(toolbarElement);
-        console.log('[LinkedIn Text Formatter] Canonical toolbar reparented.');
+        debugLog('[LinkedIn Text Formatter] Canonical toolbar reparented.');
       } else {
-        console.log('[LinkedIn Text Formatter] Canonical toolbar reused.');
+        debugLog('[LinkedIn Text Formatter] Canonical toolbar reused.');
       }
       cleanupDuplicateToolbars(targetHost, toolbarElement);
       return toolbarElement;
     }
 
     // 3. Create new canonical toolbar element
-    console.log('[LinkedIn Text Formatter] Canonical toolbar created.');
+    debugLog('[LinkedIn Text Formatter] Canonical toolbar created.');
     const doc = (targetHost && targetHost.ownerDocument) ? targetHost.ownerDocument : document;
     const toolbar = doc.createElement('div');
     toolbar.id = 'ltf-floating-toolbar';
@@ -392,34 +392,34 @@
 
     // Register capture phase listeners on toolbar container
     toolbar.addEventListener('pointerdown', () => {
-      console.log('[LinkedIn Text Formatter] Toolbar button pointerdown received');
+      debugLog('[LinkedIn Text Formatter] Toolbar button pointerdown received');
       const SelectionManager = window.LinkedInTextFormatter.SelectionManager;
       if (SelectionManager && typeof SelectionManager.beginProtectedInteraction === 'function') {
         SelectionManager.beginProtectedInteraction();
-        console.log('[LinkedIn Text Formatter] protected interaction started');
+        debugLog('[LinkedIn Text Formatter] protected interaction started');
       }
     }, { capture: true });
 
     toolbar.addEventListener('mousedown', () => {
-      console.log('[LinkedIn Text Formatter] mousedown received');
+      debugLog('[LinkedIn Text Formatter] mousedown received');
       const SelectionManager = window.LinkedInTextFormatter.SelectionManager;
       if (SelectionManager && typeof SelectionManager.beginProtectedInteraction === 'function') {
         SelectionManager.beginProtectedInteraction();
-        console.log('[LinkedIn Text Formatter] protected interaction started');
+        debugLog('[LinkedIn Text Formatter] protected interaction started');
       }
     }, { capture: true });
 
     toolbar.addEventListener('mouseup', () => {
-      console.log('[LinkedIn Text Formatter] mouseup received');
+      debugLog('[LinkedIn Text Formatter] mouseup received');
     }, { capture: true });
 
     toolbar.addEventListener('click', (e) => {
-      console.log('[LinkedIn Text Formatter] Toolbar button click received');
+      debugLog('[LinkedIn Text Formatter] Toolbar button click received');
       const target = e.target;
       const btn = target ? (typeof target.closest === 'function' ? target.closest('[data-action]') : null) : null;
       if (btn) {
         const actionStyle = btn.getAttribute('data-action');
-        console.log(`[LinkedIn Text Formatter] Button action resolved: ${actionStyle}`);
+        debugLog(`[LinkedIn Text Formatter] Button action resolved: ${actionStyle}`);
         if (actionStyle) {
           handleButtonClick(actionStyle);
         }
@@ -445,7 +445,7 @@
 
       btn.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
-          console.log('[LinkedIn Text Formatter] keyboard activation received');
+          debugLog('[LinkedIn Text Formatter] keyboard activation received');
           const SelectionManager = window.LinkedInTextFormatter.SelectionManager;
           if (SelectionManager && typeof SelectionManager.beginProtectedInteraction === 'function') {
             SelectionManager.beginProtectedInteraction();
@@ -479,9 +479,9 @@
       }
     }
 
-    console.log(`[LinkedIn Text Formatter] Toolbar action requested: ${actionStyle}`);
-    console.log(`[LinkedIn Text Formatter] Number of registered action callbacks: ${formatActionCallbacks.length}`);
-    console.log('[LinkedIn Text Formatter] Format action emitted');
+    debugLog(`[LinkedIn Text Formatter] Toolbar action requested: ${actionStyle}`);
+    debugLog(`[LinkedIn Text Formatter] Number of registered action callbacks: ${formatActionCallbacks.length}`);
+    debugLog('[LinkedIn Text Formatter] Format action emitted');
 
     formatActionCallbacks.forEach((cb) => {
       try {
@@ -494,7 +494,7 @@
     Promise.resolve().then(() => {
       if (SelectionManager && typeof SelectionManager.endProtectedInteraction === 'function') {
         SelectionManager.endProtectedInteraction();
-        console.log('[LinkedIn Text Formatter] protected interaction ended');
+        debugLog('[LinkedIn Text Formatter] protected interaction ended');
       }
     });
   }
@@ -507,7 +507,7 @@
       cancelAnimationFrame(pendingShowFrame);
       pendingShowFrame = null;
     }
-    console.log(`[LinkedIn Text Formatter] Toolbar hidden. Reason: ${reason}`);
+    debugLog(`[LinkedIn Text Formatter] Toolbar hidden. Reason: ${reason}`);
     if (toolbarElement) {
       toolbarElement.classList.add('ltf-toolbar--hidden');
       toolbarElement.style.display = 'none';
@@ -555,17 +555,17 @@
     const editor = SelectionManager && typeof SelectionManager.getSavedEditor === 'function' ? SelectionManager.getSavedEditor() : null;
 
     if (!range) {
-      console.log('[LinkedIn Text Formatter] Saved range validation failed: No range retrieved.');
+      debugLog('[LinkedIn Text Formatter] Saved range validation failed: No range retrieved.');
       hide('no-range-for-positioning');
       return false;
     }
 
     if (SelectionManager && typeof SelectionManager.hasValidSelection === 'function' && !SelectionManager.hasValidSelection()) {
-      console.log('[LinkedIn Text Formatter] Saved range validation failed: SelectionManager reports selection invalid.');
+      debugLog('[LinkedIn Text Formatter] Saved range validation failed: SelectionManager reports selection invalid.');
       hide('selection-invalidated-during-positioning');
       return false;
     }
-    console.log('[LinkedIn Text Formatter] Saved range validation passed.');
+    debugLog('[LinkedIn Text Formatter] Saved range validation passed.');
 
     // Step 1: Ensure element exists & attached inside active composer host
     createToolbarElement(editor);
@@ -580,16 +580,16 @@
 
     // Step 3: Measure toolbar
     const toolbarRect = toolbarElement.getBoundingClientRect();
-    console.log(`[LinkedIn Text Formatter] Toolbar rectangle measured: ${toolbarRect.width}x${toolbarRect.height}.`);
+    debugLog(`[LinkedIn Text Formatter] Toolbar rectangle measured: ${toolbarRect.width}x${toolbarRect.height}.`);
 
     // Step 4: Measure range
     const selectionRect = getValidSelectionRect(range);
     if (!selectionRect) {
-      console.log('[LinkedIn Text Formatter] Selection rectangle measurement failed: 0x0 or invalid rect.');
+      debugLog('[LinkedIn Text Formatter] Selection rectangle measurement failed: 0x0 or invalid rect.');
       hide('invalid-selection-rect');
       return false;
     }
-    console.log(`[LinkedIn Text Formatter] Selection rectangle measured: ${selectionRect.width}x${selectionRect.height} at (${selectionRect.left}, ${selectionRect.top}).`);
+    debugLog(`[LinkedIn Text Formatter] Selection rectangle measured: ${selectionRect.width}x${selectionRect.height} at (${selectionRect.left}, ${selectionRect.top}).`);
 
     // Step 5: Calculate position
     const viewportRect = {
@@ -599,11 +599,11 @@
 
     const pos = calculateToolbarPosition(selectionRect, toolbarRect, viewportRect);
     if (!pos) {
-      console.log('[LinkedIn Text Formatter] Position calculation failed.');
+      debugLog('[LinkedIn Text Formatter] Position calculation failed.');
       hide('position-calculation-failed');
       return false;
     }
-    console.log(`[LinkedIn Text Formatter] Position calculated: top=${pos.top}px, left=${pos.left}px (placement: ${pos.placement}).`);
+    debugLog(`[LinkedIn Text Formatter] Position calculated: top=${pos.top}px, left=${pos.left}px (placement: ${pos.placement}).`);
 
     // Step 6: Apply top and left
     toolbarElement.style.top = `${pos.top}px`;
@@ -615,7 +615,7 @@
     toolbarElement.style.pointerEvents = 'auto';
     toolbarElement.setAttribute('aria-hidden', 'false');
 
-    console.log('[LinkedIn Text Formatter] Toolbar visible state applied successfully.');
+    debugLog('[LinkedIn Text Formatter] Toolbar visible state applied successfully.');
     return true;
   }
 
@@ -634,20 +634,20 @@
   function show(suppliedRange) {
     if (pendingShowFrame) {
       cancelAnimationFrame(pendingShowFrame);
-      console.log('[LinkedIn Text Formatter] Selection update coalesced.');
+      debugLog('[LinkedIn Text Formatter] Selection update coalesced.');
     }
     pendingShowFrame = requestAnimationFrame(() => {
       pendingShowFrame = null;
-      console.log('[LinkedIn Text Formatter] show() requested.');
+      debugLog('[LinkedIn Text Formatter] show() requested.');
       const SelectionManager = window.LinkedInTextFormatter.SelectionManager;
       const range = suppliedRange || (SelectionManager && typeof SelectionManager.getSavedRange === 'function' ? SelectionManager.getSavedRange() : null);
 
       if (!range) {
-        console.log('[LinkedIn Text Formatter] show() failed: No valid range retrieved.');
+        debugLog('[LinkedIn Text Formatter] show() failed: No valid range retrieved.');
         hide('no-range-on-show');
         return;
       }
-      console.log('[LinkedIn Text Formatter] Saved range retrieved.');
+      debugLog('[LinkedIn Text Formatter] Saved range retrieved.');
 
       positionToolbar(range);
     });
@@ -686,9 +686,9 @@
    * Initializes the ToolbarManager.
    */
   function initialize() {
-    console.log('[LinkedIn Text Formatter] ToolbarManager initialization started.');
+    debugLog('[LinkedIn Text Formatter] ToolbarManager initialization started.');
     if (isInitialized) {
-      console.log('[LinkedIn Text Formatter] ToolbarManager already initialized.');
+      debugLog('[LinkedIn Text Formatter] ToolbarManager already initialized.');
       return;
     }
     isInitialized = true;
@@ -703,12 +703,12 @@
     if (SelectionManager) {
       if (typeof SelectionManager.onSelectionValid === 'function') {
         SelectionManager.onSelectionValid(() => {
-          console.log('[LinkedIn Text Formatter] Selection-valid callback received.');
+          debugLog('[LinkedIn Text Formatter] Selection-valid callback received.');
           const range = typeof SelectionManager.getSavedRange === 'function' ? SelectionManager.getSavedRange() : null;
           show(range);
         });
         selectionSubscriptionCount++;
-        console.log('[LinkedIn Text Formatter] Selection-valid callback registered.');
+        debugLog('[LinkedIn Text Formatter] Selection-valid callback registered.');
       }
 
       if (typeof SelectionManager.onSelectionInvalid === 'function') {
@@ -717,7 +717,7 @@
         });
       }
     } else {
-      console.log('[LinkedIn Text Formatter] SelectionManager not found during ToolbarManager initialization.');
+      debugLog('[LinkedIn Text Formatter] SelectionManager not found during ToolbarManager initialization.');
     }
 
     // Scroll & resize event listeners

@@ -34,5 +34,4 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  console.log('[LinkedIn Text Formatter] Popup initialized successfully.');
 });
