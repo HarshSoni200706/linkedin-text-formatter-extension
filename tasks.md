@@ -808,53 +808,93 @@ Phase 13 is complete when:
 
 # Phase 14 — Release Preparation
 
+**Status:** In Progress ([~]) — All automated preparation complete; manual testing, ZIP build, and publication actions remain pending.
+
 ## Objective
 
-Prepare a stable release build for GitHub and potential Chrome Web Store submission.
+Prepare a stable v1.0.0 release build for GitHub and potential Chrome Web Store submission.
 
-## Tasks
+## Version Audit
 
-- [ ] Remove development logs.
-- [ ] Remove unused files.
-- [ ] Remove commented-out experimental code.
-- [ ] Verify extension version numbers.
-- [ ] Validate `manifest.json`.
-- [ ] Verify all icon sizes.
-- [ ] Run the full testing checklist.
-- [ ] Confirm the extension loads from a clean folder.
-- [ ] Confirm the repository contains no secrets.
-- [ ] Confirm the repository contains no local system files.
-- [ ] Create release screenshots.
-- [ ] Create a short demo GIF or video.
-- [ ] Prepare a release ZIP containing only extension files.
-- [ ] Create GitHub release notes.
-- [ ] Tag the release as `v1.0.0`.
-- [ ] Publish the first GitHub release.
-- [ ] Decide whether to submit to the Chrome Web Store.
-- [ ] Prepare a Chrome Web Store listing if required.
-- [ ] Prepare a privacy policy URL if required.
-- [ ] Add support and issue-reporting instructions.
+- [x] Bump `manifest.json` version to `1.0.0`.
+- [x] Update popup fallback badge to `v1.0.0`.
+- [x] Update CHANGELOG.md with `[1.0.0]` release section.
+- [x] Update README.md project status and roadmap section.
+
+## Source Cleanup
+
+- [x] Remove development logs — `__ltfDebug` conditional block removed from `text-formatter.js`.
+- [x] Verify `DEBUG = false` in all content-script modules (confirmed — unchanged).
+- [x] Confirm no unconditional `console.log` in production source (confirmed — verified).
+- [x] Confirm no TODO/FIXME/HACK/TEMP markers in source (none found).
+- [x] Confirm no commented-out experimental code (none found).
+
+## Validation
+
+- [x] Validate `manifest.json` — manifest_version 3, zero permissions, LinkedIn-only match, all paths verified.
+- [x] Verify all icon sizes — 16×16, 32×32, 48×48, 128×128 all exist and match declared dimensions.
+- [x] Secret audit — no API keys, tokens, or credentials found anywhere in the repository.
+- [x] Local system file audit — no `.DS_Store`, `Thumbs.db`, `.swp`, `.env`, or `node_modules` found.
+- [x] `.gitignore` updated to cover `release/` staging directory.
+
+## Documentation
+
+- [x] Add Support section to `README.md`.
+- [x] Create `docs/release/v1.0.0-release-notes.md`.
+- [x] Create `docs/release/chrome-web-store-readiness.md`.
+- [x] Create `docs/release/chrome-web-store-listing.md`.
+- [x] Create `docs/release/v1.0.0-readiness-report.md`.
+- [x] Add privacy policy URL guidance (pending public URL confirmation).
+
+## Testing
+
+- [x] Create `tests/release-readiness.test.js` (89 tests, 0 failures).
+- [x] Update version assertions in `tests/popup.test.js` and `tests/documentation.test.js` to expect `1.0.0`.
+- [x] All 11 automated test suites passing (645 tests, 0 failures). *(Confirm with: `for s in tests/*.test.js; do node $s; done`)*
+- [ ] Complete manual release testing checklist (`docs/testing/manual-testing-checklist.md`). (**PENDING** — manual)
+
+## Release Package
+
+- [x] Create `build-release.js` staging and ZIP build script.
+- [ ] Run `node build-release.js` to produce staging directory and ZIP. (**PENDING** — manual)
+- [ ] Verify ZIP contains only runtime files (manifest.json, src/, assets/icons/). (**PENDING**)
+- [ ] Record ZIP SHA-256 checksum. (**PENDING**)
+- [ ] Confirm the extension loads from the clean staging folder in Chrome. (**PENDING** — manual)
+
+## Screenshots & Demo
+
+- [x] All six required screenshots present in `assets/screenshots/`.
+- [ ] Create a short demo GIF or video. (**PENDING** — see capture plan in readiness report)
+
+## Release Publication
+
+- [ ] Tag the release as `v1.0.0`: `git tag -a v1.0.0 -m "LinkedIn Text Formatter v1.0.0"`. (**PENDING** — requires manual approval)
+- [ ] Push tag: `git push origin v1.0.0`. (**PENDING** — requires manual approval)
+- [ ] Publish GitHub release with `docs/release/v1.0.0-release-notes.md` and ZIP attachment. (**PENDING** — manual)
+- [ ] Decide whether to submit to the Chrome Web Store. (**PENDING** — decision required)
+- [ ] Submit to Chrome Web Store if decision is Yes. (**PENDING** — manual)
+- [ ] Confirm public Privacy Policy URL after main branch merge. (**PENDING**)
 
 ## Chrome Web Store Listing Content
 
-- [ ] Extension name.
-- [ ] Short description.
-- [ ] Detailed description.
-- [ ] Category.
-- [ ] Screenshots.
-- [ ] Promotional image if required.
-- [ ] Privacy explanation.
-- [ ] Permission justification.
-- [ ] Support URL.
-- [ ] GitHub repository URL.
+- [x] Extension name — "LinkedIn Text Formatter" (documented)
+- [x] Short description — 132-character version documented
+- [x] Detailed description — documented
+- [x] Category — Productivity (recommended and justified)
+- [x] Screenshots — 6 real screenshots present
+- [ ] Promotional tile (440×280) — (**PENDING** — not created)
+- [x] Privacy explanation — documented
+- [x] Permission justification — documented
+- [x] Support URL — documented
+- [x] GitHub repository URL — documented
 
 ## Phase Completion Criteria
 
 Phase 14 is complete when:
 
-- Version 1.0.0 is packaged and tested.
-- The GitHub release is published.
-- The extension is ready for store submission or direct developer installation.
+- Version 1.0.0 is packaged and manually tested. (**Packaging pending**)
+- The GitHub release is published. (**Pending**)
+- The extension is ready for store submission or direct developer installation. (**Technically ready; manual verification pending**)
 
 ---
 

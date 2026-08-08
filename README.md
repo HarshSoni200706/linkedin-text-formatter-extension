@@ -6,10 +6,10 @@ LinkedIn Text Formatter is a lightweight Chrome extension that lets users format
 
 ## Project Status
 
-- **Version:** 0.1.0 (Manifest V3)
-- **Current Phase:** Phase 13 — Documentation ([~] In Progress)
-- **Automated Test Coverage:** 10 zero-dependency Node test suites passing (440+ tests, 0 failures)
-- **Chrome Web Store Status:** Unpacked developer extension (not currently published on the Chrome Web Store)
+- **Version:** 1.0.0 (Manifest V3)
+- **Current Phase:** Phase 14 — Release Preparation ([~] In Progress)
+- **Automated Test Coverage:** 11 zero-dependency Node test suites passing (560+ tests, 0 failures)
+- **Chrome Web Store Status:** Not currently published on the Chrome Web Store
 
 ---
 
@@ -319,7 +319,7 @@ Review the complete security audit in [docs/security/phase-12-security-review.md
 
 ## Development Roadmap
 
-### Version 0.1 (Current)
+### Version 1.0 (Current Release)
 - Stable 5-style Unicode formatting engine
 - Dual layout support (Direct-document and open Shadow DOM)
 - Entity and URL protection (QA-001)
@@ -346,6 +346,22 @@ We welcome contributions! Please review our [CONTRIBUTING.md](CONTRIBUTING.md) g
 ## License
 
 This project is licensed under the terms of the **MIT License**. See the [LICENSE](LICENSE) file for complete license text.
+
+---
+
+## Support
+
+Found a bug or have a question? Please [open a GitHub issue](https://github.com/HarshSoni200706/linkedin-text-formatter-extension/issues).
+
+When reporting a bug, please include:
+- Chrome browser version
+- Which LinkedIn composer layout was affected (post creator, shadow DOM)
+- Steps to reproduce
+- Expected vs actual behavior
+- Any console errors visible in Chrome DevTools
+
+> [!CAUTION]
+> **Never include** post contents, session cookies, access tokens, authentication headers, or private messages in a bug report.
 
 ---
 

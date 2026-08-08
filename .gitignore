@@ -19,6 +19,7 @@ Thumbs.db
 # Build and package outputs
 dist/
 build/
+release/
 *.zip
 *.crx
 

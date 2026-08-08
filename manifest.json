@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "LinkedIn Text Formatter",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Highlight text inside LinkedIn's post editor to format it as Bold, Italic, Bold Italic, Underline, or Double Underline.",
   "icons": {
     "16": "assets/icons/icon-16.png",
