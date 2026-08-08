@@ -243,9 +243,9 @@ assertTrue('36. LICENSE file exists', exists('LICENSE'));
 
 // 37. Version references consistency
 const popupHtml = read('src/popup/popup.html');
-assertTrue('37. Manifest version is 0.1.0', manifest.version === '0.1.0');
-assertTrue('37. Popup HTML version is v0.1.0', popupHtml.includes('v0.1.0'));
-assertTrue('37. README documents version 0.1.0', /0\.1\.0/.test(readme));
+assertTrue('37. Manifest version is 1.0.0', manifest.version === '1.0.0');
+assertTrue('37. Popup HTML version is v1.0.0', popupHtml.includes('v1.0.0'));
+assertTrue('37. README documents version 1.0.0', /1\.0\.0/.test(readme));
 
 // 38. Test commands in README include all current test suites
 const expectedSuites = [

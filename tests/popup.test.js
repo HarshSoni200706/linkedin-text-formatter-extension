@@ -42,7 +42,7 @@ function runPopupTests() {
 
   assert("Manifest popup path points to src/popup/popup.html", manifest.action && manifest.action.default_popup, 'src/popup/popup.html');
   assert("Manifest requests no storage permission (v1 product decision)", Boolean(manifest.permissions && manifest.permissions.includes('storage')), false);
-  assert("Manifest version is 0.1.0", manifest.version, '0.1.0');
+  assert("Manifest version is 1.0.0", manifest.version, '1.0.0');
 
   // 2. File Existence Checks
   assert("popup.html exists", fs.existsSync(HTML_PATH), true);
