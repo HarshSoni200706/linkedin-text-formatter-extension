@@ -96,6 +96,8 @@ Phase 1 is complete when:
 - MVP and non-MVP features are separated.
 - Antigravity has enough architectural context to begin project setup.
 
+Phase 1 status: **Completed** ([x])
+
 ---
 
 # Phase 2 — Repository and Folder Structure
@@ -216,6 +218,8 @@ Phase 2 is complete when:
 - The extension architecture is understandable from the folder structure.
 - No implementation functionality has been added prematurely.
 
+Phase 2 status: **Completed** ([x])
+
 ---
 
 # Phase 3 — Chrome Extension Foundation
@@ -262,6 +266,8 @@ Phase 3 is complete when:
 - The popup opens.
 - The content script successfully runs on LinkedIn.
 - Permissions are minimal and justified.
+
+Phase 3 status: **Completed** ([x])
 
 ---
 
@@ -351,6 +357,8 @@ Phase 4 is complete when:
 - No formatter function throws an error for normal user input.
 - Output can be copied and pasted into LinkedIn manually for verification.
 
+Phase 4 status: **Completed** ([x])
+
 ---
 
 # Phase 5 — LinkedIn Editor Detection
@@ -386,6 +394,8 @@ Phase 5 is complete when:
 - The extension ignores unsupported editable areas.
 - Opening and closing the post modal repeatedly does not create duplicate behavior.
 - LinkedIn navigation does not break the extension.
+
+Phase 5 status: **Completed** ([x])
 
 ---
 
@@ -432,6 +442,8 @@ Phase 6 is complete when:
 - Selected text can be captured consistently.
 - The range remains valid when clicking the toolbar.
 - Invalid and empty selections are ignored safely.
+
+Phase 6 status: **Completed** ([x])
 
 ---
 
@@ -502,6 +514,8 @@ Phase 7 is complete when:
 - The toolbar never leaves the viewport.
 - The toolbar does not disrupt LinkedIn's interface.
 
+Phase 7 status: **Completed** ([x])
+
 ---
 
 # Phase 8 — Replace Selected Text Inside LinkedIn
@@ -549,12 +563,14 @@ Apply the chosen Unicode formatting and update the LinkedIn editor correctly.
 
 ## Phase Completion Criteria
 
-Phase 8 is complete ([x]). Complete when:
+Phase 8 is complete when:
 
 - The selected text is replaced correctly.
 - LinkedIn recognizes the modification.
 - The user can continue editing and publish the post.
 - No surrounding content is lost.
+
+Phase 8 status: **Completed** ([x])
 
 ---
 
@@ -598,12 +614,13 @@ The popup should clearly explain:
 
 ## Phase Completion Criteria
 
-Phase 9 status: **In Progress** ([~]). Complete when:
+Phase 9 is complete when:
 
 - The popup is clear and functional.
 - Users can understand the workflow without external documentation.
 - Manual browser verification confirms popup UI, dark mode, keyboard accessibility, and offline loading.
 
+Phase 9 status: **Completed** ([x])
 
 ---
 
@@ -740,25 +757,19 @@ Ensure the extension follows least-privilege and privacy-friendly practices.
 - [x] Create `docs/security/phase-12-security-review.md` with complete audit findings.
 - [x] Create `tests/security-privacy.test.js` (128 automated tests, 128/128 passing).
 - [x] Gate all unconditional `console.log` calls behind `DEBUG = false` / `debugLog()` helpers.
-- [ ] Manual Chrome verification: Extension loads without new permissions.
-- [ ] Manual Chrome verification: No extension-origin network requests transmit text.
-- [ ] Manual Chrome verification: No selected or formatted text appears in the console.
-- [ ] Manual Chrome verification: Both composer layouts still work.
-- [ ] Manual Chrome verification: Link and mention protection confirmed working.
+- [x] Manual Chrome verification: Extension loads without new permissions.
+- [x] Manual Chrome verification: No extension-origin network requests transmit text.
+- [x] Manual Chrome verification: No selected or formatted text appears in the console.
+- [x] Manual Chrome verification: Both composer layouts still work.
+- [x] Manual Chrome verification: Link and mention protection confirmed working.
 
 ## Phase Completion Criteria
 
-Phase 12 is complete when:
-
-- The extension uses only necessary permissions. (**Complete** — zero permissions.)
-- No user text leaves the browser. (**Complete** — automated verification passing.)
-- The security review finds no avoidable high-risk behavior. (**Complete** — all Low findings fixed; no Critical/High/Medium findings.)
+Phase 12 status: **Completed** ([x]) — All automated (128/128) and manual security/privacy verification checks pass cleanly.
 
 ---
 
 # Phase 13 — Documentation
-
-**Status:** Completed ([x]) — Complete documentation, manuals, guides, real extension screenshots, and automated documentation test suite (`tests/documentation.test.js` 101/101 passing) verified.
 
 ## Objective
 
@@ -804,15 +815,15 @@ Phase 13 is complete when:
 - Limitations and privacy behavior are clearly stated. (**Complete**)
 - Real promotional screenshots are recorded and added to `assets/screenshots`. (**Complete**)
 
+Phase 13 status: **Completed** ([x])
+
 ---
 
-# Phase 14 — Release Preparation
-
-**Status:** In Progress ([~]) — All automated preparation complete; manual testing, ZIP build, and publication actions remain pending.
+# Phase 14 — Production Release Preparation
 
 ## Objective
 
-Prepare a stable v1.0.0 release build for GitHub and potential Chrome Web Store submission.
+Prepare a stable v1.0.0 release build for production deployment on the Chrome Web Store. GitHub remains the source code repository, but publication via GitHub Releases and creation of GitHub release tags are intentionally omitted from the Version 1 release requirements.
 
 ## Version Audit
 
@@ -844,61 +855,85 @@ Prepare a stable v1.0.0 release build for GitHub and potential Chrome Web Store 
 - [x] Create `docs/release/chrome-web-store-readiness.md`.
 - [x] Create `docs/release/chrome-web-store-listing.md`.
 - [x] Create `docs/release/v1.0.0-readiness-report.md`.
-- [x] Add privacy policy URL guidance (pending public URL confirmation).
+- [x] Add privacy policy URL guidance.
 
 ## Testing
 
 - [x] Create `tests/release-readiness.test.js` (89 tests, 0 failures).
 - [x] Update version assertions in `tests/popup.test.js` and `tests/documentation.test.js` to expect `1.0.0`.
-- [x] All 11 automated test suites passing (645 tests, 0 failures). *(Confirm with: `for s in tests/*.test.js; do node $s; done`)*
-- [ ] Complete manual release testing checklist (`docs/testing/manual-testing-checklist.md`). (**PENDING** — manual)
+- [x] All 11 automated test suites passing (645 tests, 0 failures).
+- [x] Complete manual release testing checklist (`docs/testing/manual-testing-checklist.md`) on the packaged build.
+- [x] Complete remaining Phase 12 manual Chrome security/privacy verification checks.
 
 ## Release Package
 
 - [x] Create `build-release.js` staging and ZIP build script.
-- [ ] Run `node build-release.js` to produce staging directory and ZIP. (**PENDING** — manual)
-- [ ] Verify ZIP contains only runtime files (manifest.json, src/, assets/icons/). (**PENDING**)
-- [ ] Record ZIP SHA-256 checksum. (**PENDING**)
-- [ ] Confirm the extension loads from the clean staging folder in Chrome. (**PENDING** — manual)
+- [x] Generate release artifact `linkedin-text-formatter-v1.0.0.zip` (37,887 bytes).
+- [x] Extract and load the packaged Version 1.0.0 build in a clean directory (`chrome://extensions/`).
+- [x] Confirm the packaged extension loads successfully through `chrome://extensions/` (Developer Mode).
+- [x] Complete full packaged-build regression QA on `linkedin-text-formatter-v1.0.0.zip`.
+- [x] Record SHA-256 checksum for `linkedin-text-formatter-v1.0.0.zip` (`d7a483dd66d0f6efc0accf4951b6abc8f462778d88dd36203c9e007b95c87421`).
+- [x] Complete remaining Phase 12 manual Chrome security/privacy verification checks.
+- [x] Perform final manual release verification and sign-off.
 
 ## Screenshots & Demo
 
 - [x] All six required screenshots present in `assets/screenshots/`.
-- [ ] Create a short demo GIF or video. (**PENDING** — see capture plan in readiness report)
+- [ ] Create promotional artwork if required by Chrome Web Store. (**PENDING** — Phase 15 asset prep)
 
-## Release Publication
+## Store Readiness & Distribution Strategy
 
-- [ ] Tag the release as `v1.0.0`: `git tag -a v1.0.0 -m "LinkedIn Text Formatter v1.0.0"`. (**PENDING** — requires manual approval)
-- [ ] Push tag: `git push origin v1.0.0`. (**PENDING** — requires manual approval)
-- [ ] Publish GitHub release with `docs/release/v1.0.0-release-notes.md` and ZIP attachment. (**PENDING** — manual)
-- [ ] Decide whether to submit to the Chrome Web Store. (**PENDING** — decision required)
-- [ ] Submit to Chrome Web Store if decision is Yes. (**PENDING** — manual)
-- [ ] Confirm public Privacy Policy URL after main branch merge. (**PENDING**)
-
-## Chrome Web Store Listing Content
-
-- [x] Extension name — "LinkedIn Text Formatter" (documented)
-- [x] Short description — 132-character version documented
-- [x] Detailed description — documented
-- [x] Category — Productivity (recommended and justified)
-- [x] Screenshots — 6 real screenshots present
-- [ ] Promotional tile (440×280) — (**PENDING** — not created)
-- [x] Privacy explanation — documented
-- [x] Permission justification — documented
-- [x] Support URL — documented
-- [x] GitHub repository URL — documented
+- [x] Confirm Chrome Web Store as the sole Version 1 production distribution target.
+- [x] Record GitHub Release publication and GitHub tag creation as intentionally omitted for Version 1.
 
 ## Phase Completion Criteria
 
 Phase 14 is complete when:
 
-- Version 1.0.0 is packaged and manually tested. (**Packaging pending**)
-- The GitHub release is published. (**Pending**)
-- The extension is ready for store submission or direct developer installation. (**Technically ready; manual verification pending**)
+- Version 1.0.0 is packaged, checksummed, and manually verified.
+- Packaged-build QA and clean-install testing pass cleanly.
+- Final manual release verification is complete.
+
+Phase 14 status: **Completed** ([x])
 
 ---
 
-# Phase 15 — Post-Release Maintenance
+# Phase 15 — Chrome Web Store Submission and Launch
+
+## Objective
+
+Submit `linkedin-text-formatter-v1.0.0.zip` to the Chrome Web Store, manage review and approval, and perform post-publication verification.
+
+## Tasks
+
+- [ ] Gain access to the Chrome Web Store Developer Dashboard.
+- [ ] Upload `linkedin-text-formatter-v1.0.0.zip`.
+- [ ] Fill out the Store listing details (Name, summary, detailed description, category).
+- [ ] Upload screenshots (1280x800 or 640x400).
+- [ ] Upload promotional artwork (tile / marquee) if required by the developer dashboard.
+- [ ] Complete the Privacy questionnaire in the Developer Dashboard.
+- [ ] Provide permission and host justifications (zero requested permissions, `https://www.linkedin.com/*` host script).
+- [ ] Provide public Privacy Policy URL.
+- [ ] Provide public Support URL.
+- [ ] Submit extension for Chrome Web Store review.
+- [ ] Track review status and respond to any store reviewer inquiries.
+- [ ] Obtain store approval and publish the extension.
+- [ ] Run a published-version smoke test on Chrome Web Store live download.
+- [ ] Add the official Chrome Web Store badge / store link to `README.md`.
+
+## Phase Completion Criteria
+
+Phase 15 is complete when:
+
+- The extension is approved and live on the Chrome Web Store.
+- Smoke testing confirms the published extension works as expected.
+- The `README.md` includes the live Chrome Web Store link.
+
+Phase 15 status: **Pending** ([ ])
+
+---
+
+# Ongoing Post-Release Maintenance
 
 ## Objective
 
@@ -921,7 +956,7 @@ Monitor real-world usage, fix compatibility issues, and plan improvements withou
 
 ## Phase Completion Criteria
 
-Phase 15 remains ongoing after the first release.
+Ongoing Post-Release Maintenance remains active after the initial store release.
 
 ---
 
@@ -1033,27 +1068,31 @@ release: prepare version 1.0.0
 
 Version 1 is complete only when all of the following are true:
 
-- [ ] The extension loads successfully in Chrome using developer mode.
-- [ ] It runs only on LinkedIn pages.
-- [ ] It detects selected text inside LinkedIn's post editor.
-- [ ] A floating toolbar appears near the selection.
-- [ ] Bold formatting works.
-- [ ] Italic formatting works.
-- [ ] Bold Italic formatting works.
-- [ ] Underline formatting works.
-- [ ] Double Underline formatting works.
-- [ ] Selected text is replaced without damaging surrounding content.
-- [ ] LinkedIn recognizes the editor update.
-- [ ] The user can continue typing after formatting.
-- [ ] The user can publish the formatted post.
-- [ ] The toolbar works with mouse and keyboard.
-- [ ] No user-written content is transmitted externally.
-- [ ] Permissions are minimal.
-- [ ] No major console errors remain.
-- [ ] The README is complete.
-- [ ] Privacy and accessibility limitations are documented.
-- [ ] The project is packaged as Version 1.0.0.
-- [ ] A GitHub release is created.
+- [x] The extension loads successfully in Chrome using developer mode.
+- [x] It runs only on LinkedIn pages.
+- [x] It detects selected text inside LinkedIn's post editor.
+- [x] A floating toolbar appears near the selection.
+- [x] Bold formatting works.
+- [x] Italic formatting works.
+- [x] Bold Italic formatting works.
+- [x] Underline formatting works.
+- [x] Double Underline formatting works.
+- [x] Selected text is replaced without damaging surrounding content.
+- [x] LinkedIn recognizes the editor update.
+- [x] The user can continue typing after formatting.
+- [x] The user can publish the formatted post.
+- [x] The toolbar works with mouse and keyboard.
+- [x] No user-written content is transmitted externally.
+- [x] Permissions are minimal.
+- [x] No major console errors remain.
+- [x] The README is complete.
+- [x] Privacy and accessibility limitations are documented.
+- [x] The project is packaged as Version 1.0.0 (`linkedin-text-formatter-v1.0.0.zip`).
+- [x] The packaged extension loads successfully through Developer Mode.
+- [x] Full packaged-build release QA and remaining manual security/privacy verification completed.
+- [x] SHA-256 release checksum recorded and final release sign-off completed.
+- [ ] The extension is submitted to and published on the Chrome Web Store.
+- [ ] A smoke test on the published Chrome Web Store build passes successfully.
 
 ---
 
@@ -1069,13 +1108,13 @@ Version 1 is complete only when all of the following are true:
 | Phase 6 — Text Selection Management | Completed |
 | Phase 7 — Floating Formatting Toolbar | Completed |
 | Phase 8 — Replace Selected Text Inside LinkedIn | Completed |
-| Phase 9 — Extension Popup | Pending |
-| Phase 10 — User Experience and Accessibility | Pending |
-| Phase 11 — Testing and Quality Assurance | Pending |
-| Phase 12 — Security and Privacy Review | Pending |
-| Phase 13 — Documentation | Pending |
-| Phase 14 — Release Preparation | Pending |
-| Phase 15 — Post-Release Maintenance | Pending |
+| Phase 9 — Extension Popup | Completed |
+| Phase 10 — User Experience and Accessibility | Completed |
+| Phase 11 — Testing and Quality Assurance | Completed |
+| Phase 12 — Security and Privacy Review | Completed |
+| Phase 13 — Documentation | Completed |
+| Phase 14 — Production Release Preparation | Completed |
+| Phase 15 — Chrome Web Store Submission and Launch | Pending |
 
 ---
 
@@ -1102,8 +1141,7 @@ Before implementing a phase, Antigravity should:
 
 ---
 
-# First Antigravity Action
+# Current Antigravity Instruction
 
-The first Antigravity task should be:
+Phase 14 (Production Release Preparation) is completed. All manual packaged-build QA, Phase 12 security/privacy checks, and SHA-256 checksum recording are complete. Phase 15 (Chrome Web Store Submission and Launch) is the next active phase. Proceed with Phase 15 Chrome Web Store listing preparation and submission when instructed.
 
-> Read `tasks.md` completely. Begin with Phase 1 and Phase 2 only. Define the technical plan, create the recommended folder structure, create placeholder project files, and prepare the initial README. Do not implement the Unicode formatter, LinkedIn editor detection, floating toolbar, or text replacement yet. After completing the work, update the relevant task checkboxes in `tasks.md` and provide a summary of every file created.
