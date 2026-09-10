@@ -7,9 +7,9 @@ LinkedIn Text Formatter is a lightweight Chrome extension that lets users format
 ## Project Status
 
 - **Version:** 1.0.0 (Manifest V3)
-- **Current Phase:** Phase 14 — Release Preparation ([~] In Progress)
-- **Automated Test Coverage:** 11 zero-dependency Node test suites passing (560+ tests, 0 failures)
-- **Chrome Web Store Status:** Not currently published on the Chrome Web Store
+- **Current Phase:** Phase 14 — Production Release Preparation ([x] Completed)
+- **Automated Test Coverage:** 11 zero-dependency Node test suites passing (645 tests, 0 failures)
+- **Chrome Web Store Status:** Pending submission and publication (Phase 15)
 
 ---
 
@@ -70,8 +70,14 @@ The extension is strictly scoped to **LinkedIn's Create a Post editor** on `http
 
 ---
 
-## Installation in Developer Mode
+## Distribution & Installation
 
+### Distribution Strategy
+- **Source Code & Documentation:** Hosted on [GitHub](https://github.com/HarshSoni200706/linkedin-text-formatter-extension).
+- **Production Distribution Target:** Chrome Web Store (submission and launch pending in Phase 15).
+- *Note:* Version 1.0.0 is not published or distributed via GitHub Releases.
+
+### Installation in Developer Mode
 To install the extension for local testing or development:
 
 1. Clone the repository to your local machine:
@@ -85,6 +91,15 @@ To install the extension for local testing or development:
 5. Select the repository root folder containing `manifest.json`.
 6. (Optional) Pin the extension icon to your Chrome toolbar for quick access to the information popup.
 7. Open or refresh `https://www.linkedin.com`.
+
+### Release Candidate Package Testing
+To test the pre-built Version 1.0.0 release candidate package locally:
+
+1. Obtain or generate `linkedin-text-formatter-v1.0.0.zip` by running `node build-release.js`.
+2. Extract the ZIP archive into a clean local directory.
+3. Open Google Chrome and navigate to `chrome://extensions/`.
+4. Enable **Developer mode** in the top-right corner.
+5. Click **Load unpacked** and select the extracted folder containing `manifest.json`.
 
 ---
 
@@ -123,7 +138,7 @@ To install the extension for local testing or development:
 
 ### Extension Popup
 
-![Extension information popup showing usage steps, style previews, version badge `v0.1.0`, and privacy guarantee.](assets/screenshots/extention-popup.png)
+![Extension information popup showing usage steps, style previews, version badge `v1.0.0`, and privacy guarantee.](assets/screenshots/extention-popup.png)
 
 ### Dark Appearance
 
@@ -166,7 +181,11 @@ linkedin-text-formatter-extension/
 │   ├── qa/
 │   │   └── phase-11-test-report.md
 │   ├── release/
-│   │   └── packaging.md
+│   │   ├── chrome-web-store-listing.md
+│   │   ├── chrome-web-store-readiness.md
+│   │   ├── packaging.md
+│   │   ├── v1.0.0-readiness-report.md
+│   │   └── v1.0.0-release-notes.md
 │   ├── security/
 │   │   └── phase-12-security-review.md
 │   └── testing/
@@ -192,21 +211,25 @@ linkedin-text-formatter-extension/
 │   └── styles/
 │       └── content-toolbar.css
 ├── tests/
+│   ├── documentation.test.js
 │   ├── editor-detector.test.js
 │   ├── formatter.test.js
 │   ├── popup.test.js
 │   ├── quality-assurance.test.js
+│   ├── release-readiness.test.js
+│   ├── runner.html
 │   ├── security-privacy.test.js
 │   ├── selection-manager.test.js
+│   ├── test-cases.md
 │   ├── text-replacement-manager.test.js
 │   ├── toolbar-manager.test.js
-│   ├── ux-accessibility.test.js
-│   └── runner.html
+│   └── ux-accessibility.test.js
 ├── CHANGELOG.md
 ├── CONTRIBUTING.md
 ├── LICENSE
 ├── PRIVACY.md
 ├── README.md
+├── build-release.js
 ├── manifest.json
 └── tasks.md
 ```
@@ -252,8 +275,10 @@ node tests/popup.test.js
 node tests/ux-accessibility.test.js
 node tests/quality-assurance.test.js
 node tests/security-privacy.test.js
+node tests/documentation.test.js
+node tests/release-readiness.test.js
 
-# Run all test suites in sequence
+# Run all 11 test suites in sequence
 for suite in tests/*.test.js; do node "$suite"; done
 ```
 
@@ -319,7 +344,7 @@ Review the complete security audit in [docs/security/phase-12-security-review.md
 
 ## Development Roadmap
 
-### Version 1.0 (Current Release)
+### Version 1.0.0 — Chrome Web Store Preparation
 - Stable 5-style Unicode formatting engine
 - Dual layout support (Direct-document and open Shadow DOM)
 - Entity and URL protection (QA-001)
@@ -368,3 +393,4 @@ When reporting a bug, please include:
 ## Disclaimer
 
 LinkedIn Text Formatter is an independent open-source Chrome extension. This project is **not affiliated with, endorsed by, or sponsored by LinkedIn Corporation** or Microsoft Corporation. "LinkedIn" is a registered trademark of LinkedIn Corporation.
+

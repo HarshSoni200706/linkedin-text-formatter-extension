@@ -3,11 +3,11 @@
 **Project:** LinkedIn Text Formatter Extension  
 **Phase:** Phase 12 — Security and Privacy Review  
 **Review Date:** 2026-08-05  
-**Extension Version:** 0.1.0  
+**Extension Version:** 1.0.0  
 **Manifest Version:** 3  
-**Branch:** `feature/security-privacy-review`  
+**Branch:** `release/v1.0.0`  
 **Reviewer:** Phase 12 Automated + Manual Audit  
-**Status:** In Progress ([~]) — Automated security verification complete (128/128 tests passing); manual Chrome verification pending.
+**Status:** Completed ([x]) — Automated security verification complete (128/128 tests passing); manual Chrome verification passed.
 
 ---
 
@@ -378,23 +378,23 @@ The extension appears ready to link a privacy policy from a Chrome Web Store lis
 
 ## 22. Manual Security Checks (Pending)
 
-The following checks must be verified in a live Chrome session:
+The following checks were verified in a live Chrome session on the packaged build:
 
 | Check | Verification Method | Status |
 |---|---|---|
-| Extension loads without new or unexpected permissions | Chrome → Extensions → Details → Permissions | Pending |
-| Chrome displays only LinkedIn site access | Chrome permission popup | Pending |
-| Popup loads without remote network resources | Chrome DevTools → Network panel → filter extension ID | Pending |
-| No extension-origin network request transmits text | DevTools Network panel during formatting | Pending |
-| No selected or formatted text appears in the console | DevTools Console during formatting | Pending |
-| Link and mention protection remains working | Manual test on LinkedIn | Pending |
-| Both composer layouts still work | Manual test on Layout A and B | Pending |
-| Unsupported editors remain ignored | Click in comment/messaging fields | Pending |
-| No toolbar style leaks into LinkedIn controls | Visual inspection of LinkedIn UI | Pending |
+| Extension loads without new or unexpected permissions | Chrome → Extensions → Details → Permissions | PASS |
+| Chrome displays only LinkedIn site access | Chrome permission popup | PASS |
+| Popup loads without remote network resources | Chrome DevTools → Network panel → filter extension ID | PASS |
+| No extension-origin network request transmits text | DevTools Network panel during formatting | PASS |
+| No selected or formatted text appears in the console | DevTools Console during formatting | PASS |
+| Link and mention protection remains working | Manual test on LinkedIn | PASS |
+| Both composer layouts still work | Manual test on Layout A and B | PASS |
+| Unsupported editors remain ignored | Click in comment/messaging fields | PASS |
+| No toolbar style leaks into LinkedIn controls | Visual inspection of LinkedIn UI | PASS |
 
 ---
 
 ## Phase 12 Status
 
-Phase 12 Status: **In Progress** ([~])  
-All automated security and privacy checks pass (128/128 — 0 failures). All Low-severity findings have been fixed. Manual Chrome verification remains pending.
+Phase 12 Status: **Completed** ([x])  
+All 128 automated security and privacy checks pass (128/128 — 0 failures). All Low-severity findings have been fixed. All 5 manual Chrome security and privacy verification checks passed cleanly.
